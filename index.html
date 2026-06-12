@@ -15,7 +15,6 @@
       --bg4: #190000;
       --main: #ff2525;
       --main2: #ff6b6b;
-      --darkRed: #9b0000;
       --gold: #ffd27d;
       --green: #8dffbc;
       --bad: #ffc0c0;
@@ -38,7 +37,7 @@
       min-height: 100vh;
       color: var(--white);
       background:
-        radial-gradient(circle at 15% 10%, rgba(255,37,37,.48), transparent 28%),
+        radial-gradient(circle at 15% 10%, color-mix(in srgb, var(--main) 50%, transparent), transparent 28%),
         radial-gradient(circle at 85% 12%, rgba(255,210,125,.20), transparent 30%),
         radial-gradient(circle at 50% 100%, rgba(155,0,0,.45), transparent 38%),
         linear-gradient(135deg, var(--bg1), var(--bg2), var(--bg3), var(--bg4));
@@ -81,11 +80,6 @@
       z-index: 99999;
       padding: 0;
       cursor: pointer;
-    }
-
-    .secret-skip:hover {
-      opacity: 0.04;
-      transform: none;
     }
 
     .float-area,
@@ -155,15 +149,24 @@
       font-weight: 900;
     }
 
-    .brand span {
-      width: 38px;
-      height: 38px;
+    .brand-logo {
+      width: 42px;
+      height: 42px;
       display: grid;
       place-items: center;
       border-radius: 15px;
       background: linear-gradient(135deg, var(--main), var(--gold));
       color: #2b0505;
       font-size: 20px;
+      object-fit: cover;
+      overflow: hidden;
+    }
+
+    .brand-logo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
     }
 
     button {
@@ -179,14 +182,19 @@
       transition: .22s ease;
     }
 
-    button:hover {
-      transform: translateY(-2px);
-    }
+    button:hover { transform: translateY(-2px); }
 
     button.secondary {
       color: white;
       background: rgba(255,255,255,.12);
       border: 1px solid var(--border);
+      box-shadow: none;
+    }
+
+    button.danger {
+      color: white;
+      background: rgba(255, 50, 50, .22);
+      border: 1px solid rgba(255, 150, 150, .35);
       box-shadow: none;
     }
 
@@ -264,7 +272,7 @@
       height: 360px;
       right: -160px;
       top: -160px;
-      background: radial-gradient(circle, rgba(255,37,37,.50), transparent 65%);
+      background: radial-gradient(circle, color-mix(in srgb, var(--main) 55%, transparent), transparent 65%);
       pointer-events: none;
     }
 
@@ -341,12 +349,22 @@
       font-weight: 900;
     }
 
-    .locked-news {
-      margin-top: 24px;
+    .locked-news,
+    .question,
+    .secret-news {
+      margin-top: 20px;
       background: rgba(0,0,0,.22);
-      border: 1px solid rgba(255,210,125,.28);
+      border: 1px solid rgba(255,255,255,.15);
       border-radius: 24px;
       padding: 18px;
+      color: rgba(255,255,255,.9);
+      font-size: 20px;
+      line-height: 2;
+      font-weight: 700;
+    }
+
+    .locked-news {
+      border-color: rgba(255,210,125,.28);
     }
 
     .locked-news-title {
@@ -354,6 +372,12 @@
       font-weight: 900;
       font-size: 19px;
       margin-bottom: 8px;
+    }
+
+    .secret-news {
+      border: 1px dashed rgba(255,210,125,.75);
+      background: rgba(255,210,125,.11);
+      font-weight: 900;
     }
 
     .buttons {
@@ -392,34 +416,29 @@
       font-size: 14px;
     }
 
-    .question {
-      margin: 18px 0 18px;
-      padding: 18px;
-      background: rgba(0,0,0,.22);
-      border: 1px solid rgba(255,255,255,.15);
-      border-radius: 24px;
-      color: rgba(255,255,255,.9);
-      font-size: 20px;
-      line-height: 2;
-      font-weight: 700;
-    }
-
-    input {
+    input, textarea, select {
       width: 100%;
       border: 1px solid rgba(255,255,255,.25);
       outline: none;
-      border-radius: 20px;
-      padding: 16px 18px;
-      background: rgba(0,0,0,.26);
+      border-radius: 18px;
+      padding: 14px 16px;
+      background: rgba(0,0,0,.28);
       color: white;
-      font-size: 18px;
+      font-size: 16px;
       font-weight: 800;
-      margin-top: 6px;
     }
 
-    input::placeholder {
+    textarea {
+      min-height: 130px;
+      resize: vertical;
+      line-height: 1.8;
+    }
+
+    input::placeholder, textarea::placeholder {
       color: rgba(255,255,255,.45);
     }
+
+    option { color: #111; }
 
     .choices {
       display: grid;
@@ -510,9 +529,7 @@
       box-shadow: 0 16px 45px rgba(0,0,0,.24);
     }
 
-    .mini-card.full {
-      grid-column: 1 / -1;
-    }
+    .mini-card.full { grid-column: 1 / -1; }
 
     .mini-card h3 {
       margin: 0 0 12px;
@@ -533,32 +550,39 @@
       margin-top: 14px;
     }
 
-    .video-list {
+    .media-list {
       display: grid;
       gap: 14px;
     }
 
-    .video-box {
+    .media-box {
       overflow: hidden;
       border-radius: 20px;
       border: 1px solid var(--border);
       background: rgba(0,0,0,.24);
     }
 
-    .video-title {
+    .media-title {
       padding: 12px 14px;
       font-weight: 900;
       color: var(--gold);
       border-bottom: 1px solid rgba(255,255,255,.11);
     }
 
-    .video-box iframe,
-    .video-box video {
+    .media-box iframe,
+    .media-box video,
+    .media-box img {
       width: 100%;
-      aspect-ratio: 16 / 9;
+      max-height: 620px;
+      object-fit: contain;
       display: block;
       border: 0;
       background: black;
+    }
+
+    .media-box iframe,
+    .media-box video {
+      aspect-ratio: 16 / 9;
     }
 
     .empty-media {
@@ -583,18 +607,6 @@
       font-weight: 800;
     }
 
-    .secret-news {
-      margin-top: 18px;
-      padding: 20px;
-      border-radius: 26px;
-      border: 1px dashed rgba(255,210,125,.75);
-      background: rgba(255,210,125,.11);
-      color: rgba(255,255,255,.95);
-      font-size: 20px;
-      line-height: 2;
-      font-weight: 900;
-    }
-
     .footer {
       text-align: center;
       color: rgba(255,255,255,.58);
@@ -603,38 +615,171 @@
       line-height: 1.8;
     }
 
+    .admin-panel {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.72);
+      z-index: 999999;
+      overflow: auto;
+      padding: 18px;
+      backdrop-filter: blur(12px);
+    }
+
+    .admin-panel.hidden { display: none; }
+
+    .admin-box {
+      width: min(1180px, 100%);
+      margin: 0 auto 30px;
+      background: linear-gradient(145deg, rgba(40,0,0,.96), rgba(80,0,0,.92));
+      border: 1px solid rgba(255,255,255,.22);
+      border-radius: 28px;
+      box-shadow: 0 25px 90px rgba(0,0,0,.5);
+      overflow: hidden;
+    }
+
+    .admin-head {
+      padding: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      border-bottom: 1px solid rgba(255,255,255,.14);
+    }
+
+    .admin-title {
+      font-weight: 900;
+      font-size: 24px;
+      color: var(--gold);
+    }
+
+    .admin-body { padding: 18px; }
+
+    .tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+
+    .tab-btn {
+      color: white;
+      background: rgba(255,255,255,.11);
+      border: 1px solid rgba(255,255,255,.16);
+      box-shadow: none;
+      padding: 11px 14px;
+      border-radius: 15px;
+    }
+
+    .tab-btn.active {
+      color: #2b0505;
+      background: linear-gradient(135deg, var(--main2), var(--gold));
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+    }
+
+    .form-grid.one { grid-template-columns: 1fr; }
+
+    .field {
+      display: grid;
+      gap: 8px;
+    }
+
+    .field label {
+      font-weight: 900;
+      color: rgba(255,255,255,.86);
+    }
+
+    .admin-card {
+      background: rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.15);
+      border-radius: 22px;
+      padding: 16px;
+      margin-bottom: 14px;
+    }
+
+    .admin-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .admin-status {
+      margin-top: 12px;
+      min-height: 26px;
+      color: var(--gold);
+      font-weight: 900;
+      line-height: 1.7;
+    }
+
+    .upload-progress {
+      height: 12px;
+      background: rgba(255,255,255,.14);
+      border-radius: 999px;
+      overflow: hidden;
+      margin-top: 10px;
+    }
+
+    .upload-progress span {
+      display: block;
+      width: 0%;
+      height: 100%;
+      background: linear-gradient(90deg, var(--main), var(--gold));
+      border-radius: 999px;
+    }
+
+    .list-item {
+      padding: 12px;
+      border-radius: 16px;
+      background: rgba(0,0,0,.22);
+      border: 1px solid rgba(255,255,255,.12);
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .list-item-title {
+      font-weight: 900;
+      line-height: 1.7;
+    }
+
+    .small {
+      font-size: 13px;
+      color: rgba(255,255,255,.62);
+      line-height: 1.7;
+      font-weight: 800;
+    }
+
     @media (max-width: 820px) {
-      .topbar {
+      .topbar,
+      .admin-head {
         align-items: stretch;
         flex-direction: column;
       }
 
       .brand,
-      .reset-btn {
+      .reset-btn,
+      button {
         width: 100%;
         justify-content: center;
       }
 
       .choices,
-      .final-grid {
+      .final-grid,
+      .box-game,
+      .form-grid {
         grid-template-columns: 1fr;
       }
 
-      .box-game {
-        grid-template-columns: 1fr;
-      }
-
-      .buttons {
+      .buttons,
+      .admin-row {
         flex-direction: column;
-      }
-
-      button {
-        width: 100%;
-      }
-
-      .secret-skip {
-        width: 52px;
-        height: 52px;
       }
 
       .step-head {
@@ -657,7 +802,7 @@
   <main class="wrap">
     <div class="topbar">
       <div class="brand">
-        <span>❤️</span>
+        <div class="brand-logo" id="brandLogo">❤️</div>
         <div id="brandText">رحلة المفاجأة</div>
       </div>
 
@@ -675,32 +820,80 @@
     </div>
 
     <section id="app"></section>
-
     <div class="footer" id="footerText"></div>
   </main>
 
-  <script>
-    const SITE = {
+  <section id="adminPanel" class="admin-panel hidden"></section>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
+    import { getAnalytics, isSupported } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-analytics.js";
+    import {
+      getFirestore,
+      doc,
+      getDoc,
+      setDoc,
+      onSnapshot,
+      serverTimestamp
+    } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
+    import {
+      getStorage,
+      ref,
+      uploadBytesResumable,
+      getDownloadURL
+    } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-storage.js";
+
+    /************************************************************
+      إعدادات مهمة
+    ************************************************************/
+    const ADMIN_PASSWORD = "500500";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDsj7ozg8unLTulCysLToP7fTWF4O_wkFQ",
+      authDomain: "gggggggggggggg-59d90.firebaseapp.com",
+      projectId: "gggggggggggggg-59d90",
+      storageBucket: "gggggggggggggg-59d90.firebasestorage.app",
+      messagingSenderId: "224443738693",
+      appId: "1:224443738693:web:810d73f439ff32fd05512c",
+      measurementId: "G-39YQYK665H"
+    };
+
+    const firebaseApp = initializeApp(firebaseConfig);
+    isSupported().then(ok => {
+      if (ok && location.protocol !== "file:") getAnalytics(firebaseApp);
+    }).catch(() => {});
+
+    const db = getFirestore(firebaseApp);
+    const storage = getStorage(firebaseApp);
+    const configRef = doc(db, "love_site", "main_config");
+
+    const DEFAULT_SITE = {
       title: "رحلة المفاجأة",
       loverName: "يوري",
       senderName: "سيف",
-
-      songUrl: "song.mp3",
-
-      videos: [
-        {
-          title: "فيديو الإهداء الأول",
-          type: "local",
-          value: "video.mp4"
-        },
-        {
-          title: "فيديو يوتيوب",
-          type: "youtube",
-          value: "PUT_YOUTUBE_ID_HERE"
-        }
-      ],
-
-      finalLetter:
+      logoUrl: "",
+      songUrl: "",
+      theme: {
+        bg1: "#100000",
+        bg2: "#330404",
+        bg3: "#710d0d",
+        bg4: "#190000",
+        main: "#ff2525",
+        main2: "#ff6b6b",
+        gold: "#ffd27d"
+      },
+      intro: {
+        title: "فيه شيء مخفي… وما راح تعرفينه من البداية",
+        desc: "قدامك رحلة اختبارات قصيرة. كل اختبار يفتح لك اللي بعده، وكل إجابة تقرّبك من السر الحقيقي. الخبر ما راح ينقال بسهولة، لازم توصلين له بنفسك.",
+        lockedTitle: "🔒 الخبر مقفل",
+        lockedDesc: "الخبر الحقيقي مخفي الآن. افتحي الاختبارات واحد واحد، وبعدها بتعرفين وش المقصود."
+      },
+      final: {
+        title: "وصلتي للنهاية",
+        desc: "الحين بس ينكشف الخبر الحقيقي، بعد ما خلصتي كل الاختبارات.",
+        news: "🗞️ الخبر الحقيقي:\nبكرا آخر دوام، وبكرا تسليم العهدة والسديري…\nبس المفاجأة الأكبر إن فيه هدية وإهداء معمول لك أنتِ.",
+        giftText: "وصلتي للنهاية، والآن تقدرين تستلمين الهدية من سيف 🎁",
+        letter:
 `يا أجمل شخص،
 
 ما كنت أبي أقول لك الخبر من البداية.
@@ -721,8 +914,8 @@
 الألغاز، الاختبارات، الأغنية، الفيديوهات، والكلام.
 كلها عشان أقول لك إنك غالية وتستاهلين شيء خاص.
 
-— سيف`,
-
+— سيف`
+      },
       memories: [
         "ما قلت الخبر من البداية لأن المفاجأة لازم تنكشف شوي شوي.",
         "كل اختبار هنا كان طريق صغير يوصل لكلام كبير.",
@@ -730,9 +923,13 @@
         "العهدة تتسلّم، والسديري يرجع، بس مكانك لا يتغير.",
         "أنتِ الهدية قبل الهدية."
       ],
-
-      giftText: "وصلتي للنهاية، والآن تقدرين تستلمين الهدية من سيف 🎁",
-
+      media: [
+        {
+          title: "فيديو الإهداء الأول",
+          type: "video",
+          url: ""
+        }
+      ],
       tests: [
         {
           type: "choice",
@@ -758,6 +955,8 @@
           badge: "مفتاح شخصي",
           question: "اكتبي الاسم اللي الرحلة معمولة عشانه.",
           placeholder: "اكتبي الاسم",
+          choices: [],
+          boxes: [],
           answers: ["يوري", "yuri", "Yuri"],
           hint: "اسمك أنتِ."
         },
@@ -767,6 +966,8 @@
           badge: "من صاحب المفاجأة؟",
           question: "مين الشخص اللي مجهز لك الرحلة؟",
           placeholder: "اكتبي الاسم",
+          choices: [],
+          boxes: [],
           answers: ["سيف", "saif", "Saif"],
           hint: "اسمه مكتوب تحت في نهاية الصفحة."
         },
@@ -775,6 +976,7 @@
           title: "اللعبة السهلة",
           badge: "اختاري صح",
           question: "اختاري الصندوق اللي فيه القلب الأحمر.",
+          choices: [],
           boxes: [
             { icon: "🎁", value: "هدية" },
             { icon: "❤️", value: "قلب" },
@@ -798,6 +1000,8 @@
           badge: "كود بسيط",
           question: "اكتبي الرقم السري: 143",
           placeholder: "اكتبي الرقم",
+          choices: [],
+          boxes: [],
           answers: ["143", "١٤٣"],
           hint: "الكود مكتوب في السؤال."
         },
@@ -834,6 +1038,8 @@
           badge: "قربنا",
           question: "شيء يكون عند الشخص ويرجعه بالنهاية، وش اسمه؟",
           placeholder: "اكتبي الجواب",
+          choices: [],
+          boxes: [],
           answers: ["العهدة", "عهدة", "العهد"],
           hint: "تبدأ بـ العـ..."
         },
@@ -843,6 +1049,8 @@
           badge: "آخر مفتاح",
           question: "قطعة لبس مرتبطة بالخبر المخفي، وش هي؟",
           placeholder: "اكتبي اسم القطعة",
+          choices: [],
+          boxes: [],
           answers: ["السديري", "سديري"],
           hint: "قطعة تلبس فوق الملابس."
         },
@@ -861,42 +1069,97 @@
           badge: "فتح النهاية",
           question: "اكتبي الجملة: افتح المفاجأة",
           placeholder: "اكتبي الجملة",
+          choices: [],
+          boxes: [],
           answers: ["افتح المفاجأة", "افتح المفاجاه", "إفتح المفاجأة", "إفتح المفاجاه"],
           hint: "انسخي الجملة من السؤال."
         }
       ]
     };
 
+    let SITE = structuredCloneSafe(DEFAULT_SITE);
+    let current = Number(localStorage.getItem("secret_current_step") || 0);
+    let selectedChoice = "";
+    let selectedBox = "";
+    let secretSkipClicks = 0;
+    let secretSkipTimer = null;
+
+    let adminLogged = localStorage.getItem("love_admin_logged") === "1";
+    let adminTab = "general";
+    let editingTestIndex = 0;
+
     const app = document.getElementById("app");
     const progressBar = document.getElementById("progressBar");
     const progressCount = document.getElementById("progressCount");
     const progressLabel = document.getElementById("progressLabel");
     const brandText = document.getElementById("brandText");
+    const brandLogo = document.getElementById("brandLogo");
     const footerText = document.getElementById("footerText");
+    const adminPanel = document.getElementById("adminPanel");
 
-    let current = Number(localStorage.getItem("secret_current_step") || 0);
-    let selectedChoice = "";
-    let selectedBox = "";
-
-    let secretSkipClicks = 0;
-    let secretSkipTimer = null;
-
-    brandText.textContent = SITE.title;
-    footerText.textContent = `صنع بحب من ${SITE.senderName} إلى ${SITE.loverName}`;
-
-    function secretSkip() {
-      secretSkipClicks++;
-
-      clearTimeout(secretSkipTimer);
-      secretSkipTimer = setTimeout(() => {
-        secretSkipClicks = 0;
-      }, 1800);
-
-      if (secretSkipClicks >= 5) {
-        secretSkipClicks = 0;
-        localStorage.setItem("secret_current_step", String(SITE.tests.length + 1));
-        setStep(SITE.tests.length + 1);
+    onSnapshot(configRef, snap => {
+      if (snap.exists()) {
+        SITE = mergeSite(DEFAULT_SITE, snap.data());
+      } else {
+        SITE = structuredCloneSafe(DEFAULT_SITE);
       }
+
+      applyTheme();
+      render();
+
+      if (isAdminRoute()) renderAdmin();
+    }, err => {
+      console.error(err);
+      render();
+      if (isAdminRoute()) renderAdmin(`خطأ اتصال Firebase: ${err.message}`);
+    });
+
+    async function createDefaultIfMissing() {
+      const snap = await getDoc(configRef);
+      if (!snap.exists()) {
+        await setDoc(configRef, {
+          ...SITE,
+          updatedAt: serverTimestamp()
+        });
+      }
+    }
+
+    function structuredCloneSafe(obj) {
+      return JSON.parse(JSON.stringify(obj));
+    }
+
+    function mergeSite(base, data) {
+      const merged = {
+        ...structuredCloneSafe(base),
+        ...data,
+        theme: { ...base.theme, ...(data.theme || {}) },
+        intro: { ...base.intro, ...(data.intro || {}) },
+        final: { ...base.final, ...(data.final || {}) },
+        memories: Array.isArray(data.memories) ? data.memories : base.memories,
+        media: Array.isArray(data.media) ? data.media : base.media,
+        tests: Array.isArray(data.tests) ? data.tests : base.tests
+      };
+      return merged;
+    }
+
+    function applyTheme() {
+      const t = SITE.theme || DEFAULT_SITE.theme;
+      document.documentElement.style.setProperty("--bg1", t.bg1 || DEFAULT_SITE.theme.bg1);
+      document.documentElement.style.setProperty("--bg2", t.bg2 || DEFAULT_SITE.theme.bg2);
+      document.documentElement.style.setProperty("--bg3", t.bg3 || DEFAULT_SITE.theme.bg3);
+      document.documentElement.style.setProperty("--bg4", t.bg4 || DEFAULT_SITE.theme.bg4);
+      document.documentElement.style.setProperty("--main", t.main || DEFAULT_SITE.theme.main);
+      document.documentElement.style.setProperty("--main2", t.main2 || DEFAULT_SITE.theme.main2);
+      document.documentElement.style.setProperty("--gold", t.gold || DEFAULT_SITE.theme.gold);
+    }
+
+    function esc(value) {
+      return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
     }
 
     function normalizeText(value) {
@@ -913,7 +1176,7 @@
 
     function answerIsCorrect(input, answers) {
       const cleaned = normalizeText(input);
-      return answers.some(ans => normalizeText(ans) === cleaned);
+      return (answers || []).some(ans => normalizeText(ans) === cleaned);
     }
 
     function setStep(step) {
@@ -934,29 +1197,27 @@
       progressBar.style.width = percent + "%";
       progressCount.textContent = `${solved} / ${total}`;
 
-      if (current === 0) {
-        progressLabel.textContent = "جاهزة البداية";
-      } else if (current > total) {
-        progressLabel.textContent = "تم فتح المفاجأة";
-      } else {
-        progressLabel.textContent = `اختبار ${current} من ${total}`;
-      }
+      if (current === 0) progressLabel.textContent = "جاهزة البداية";
+      else if (current > total) progressLabel.textContent = "تم فتح المفاجأة";
+      else progressLabel.textContent = `اختبار ${current} من ${total}`;
     }
 
     function render() {
+      applyTheme();
       updateProgress();
 
-      if (current === 0) {
-        renderIntro();
-        return;
+      brandText.textContent = SITE.title || "رحلة المفاجأة";
+      footerText.textContent = `صنع بحب من ${SITE.senderName || ""} إلى ${SITE.loverName || ""}`;
+
+      if (SITE.logoUrl) {
+        brandLogo.innerHTML = `<img src="${esc(SITE.logoUrl)}" alt="logo">`;
+      } else {
+        brandLogo.textContent = "❤️";
       }
 
-      if (current > SITE.tests.length) {
-        renderFinal();
-        return;
-      }
-
-      renderTest(SITE.tests[current - 1], current);
+      if (current === 0) return renderIntro();
+      if (current > SITE.tests.length) return renderFinal();
+      return renderTest(SITE.tests[current - 1], current);
     }
 
     function renderIntro() {
@@ -965,25 +1226,18 @@
           <div class="card">
             <div class="card-inner">
               <div class="tag">❤️ رسالة مقفلة</div>
-              <h1>فيه شيء مخفي… وما راح تعرفينه من البداية</h1>
+              <h1>${esc(SITE.intro.title)}</h1>
 
-              <p class="hero-desc">
-                قدامك رحلة اختبارات قصيرة. كل اختبار يفتح لك اللي بعده،
-                وكل إجابة تقرّبك من السر الحقيقي. الخبر ما راح ينقال بسهولة،
-                لازم توصلين له بنفسك.
-              </p>
+              <p class="hero-desc">${esc(SITE.intro.desc)}</p>
 
               <div class="names">
-                <div class="pill">إلى: ${SITE.loverName}</div>
-                <div class="pill">من: ${SITE.senderName}</div>
+                <div class="pill">إلى: ${esc(SITE.loverName)}</div>
+                <div class="pill">من: ${esc(SITE.senderName)}</div>
               </div>
 
               <div class="locked-news">
-                <div class="locked-news-title">🔒 الخبر مقفل</div>
-                <p>
-                  الخبر الحقيقي مخفي الآن. افتحي الاختبارات واحد واحد،
-                  وبعدها بتعرفين وش المقصود.
-                </p>
+                <div class="locked-news-title">${esc(SITE.intro.lockedTitle)}</div>
+                <p>${esc(SITE.intro.lockedDesc)}</p>
               </div>
 
               <div class="buttons">
@@ -996,11 +1250,13 @@
     }
 
     function renderTest(test, index) {
+      if (!test) return setStep(0);
+
       let body = "";
 
       if (test.type === "text") {
         body = `
-          <input id="answerInput" placeholder="${test.placeholder || "اكتبي الجواب"}" autocomplete="off" />
+          <input id="answerInput" placeholder="${esc(test.placeholder || "اكتبي الجواب")}" autocomplete="off" />
           <div class="buttons">
             <button onclick="checkTextAnswer(${index})">تحقق</button>
             <button class="secondary" onclick="showHint()">تلميح</button>
@@ -1011,8 +1267,8 @@
       if (test.type === "choice") {
         body = `
           <div class="choices">
-            ${test.choices.map(choice => `
-              <button class="choice" onclick="selectChoice(this, '${escapeForAttr(choice)}')">${choice}</button>
+            ${(test.choices || []).map(choice => `
+              <button class="choice" data-choice="${esc(choice)}">${esc(choice)}</button>
             `).join("")}
           </div>
           <div class="buttons">
@@ -1025,8 +1281,8 @@
       if (test.type === "box") {
         body = `
           <div class="box-game">
-            ${test.boxes.map(box => `
-              <button class="gift-box" onclick="selectBox(this, '${escapeForAttr(box.value)}')">${box.icon}</button>
+            ${(test.boxes || []).map(box => `
+              <button class="gift-box" data-box="${esc(box.value)}">${esc(box.icon)}</button>
             `).join("")}
           </div>
           <div class="buttons">
@@ -1043,19 +1299,19 @@
               <div class="step-head">
                 <div class="step-number">${index}</div>
                 <div class="step-mini">
-                  ${test.badge || "اختبار"}<br>
+                  ${esc(test.badge || "اختبار")}<br>
                   صفحة ${index} من ${SITE.tests.length}
                 </div>
               </div>
 
-              <div class="tag">🔐 ${test.title}</div>
-              <h2>${test.title}</h2>
+              <div class="tag">🔐 ${esc(test.title)}</div>
+              <h2>${esc(test.title)}</h2>
 
-              <div class="question">${test.question}</div>
+              <div class="question">${esc(test.question)}</div>
 
               ${body}
 
-              <div class="hint" id="hintBox">💡 ${test.hint || "فكري شوي وبتعرفين."}</div>
+              <div class="hint" id="hintBox">💡 ${esc(test.hint || "فكري شوي وبتعرفين.")}</div>
               <div class="message" id="messageBox"></div>
 
               <div class="buttons">
@@ -1065,6 +1321,14 @@
           </div>
         </section>
       `;
+
+      document.querySelectorAll("[data-choice]").forEach(btn => {
+        btn.onclick = () => selectChoice(btn, btn.dataset.choice);
+      });
+
+      document.querySelectorAll("[data-box]").forEach(btn => {
+        btn.onclick = () => selectBox(btn, btn.dataset.box);
+      });
 
       if (test.type === "text") {
         setTimeout(() => {
@@ -1083,7 +1347,6 @@
       const test = SITE.tests[index - 1];
       const input = document.getElementById("answerInput");
       const msg = document.getElementById("messageBox");
-
       if (!input || !msg) return;
 
       if (answerIsCorrect(input.value, test.answers)) {
@@ -1157,89 +1420,49 @@
     }
 
     function renderFinal() {
-      updateProgress();
       fireConfetti();
 
-      const videosHTML = SITE.videos.map(video => {
-        if (video.type === "youtube") {
-          if (!video.value || video.value === "PUT_YOUTUBE_ID_HERE") {
-            return `
-              <div class="video-box">
-                <div class="video-title">${video.title}</div>
-                <div class="empty-media">حط ID اليوتيوب في أعلى الكود مكان PUT_YOUTUBE_ID_HERE.</div>
-              </div>
-            `;
-          }
-
-          return `
-            <div class="video-box">
-              <div class="video-title">${video.title}</div>
-              <iframe
-                src="https://www.youtube.com/embed/${video.value}"
-                allowfullscreen
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture">
-              </iframe>
-            </div>
-          `;
-        }
-
-        return `
-          <div class="video-box">
-            <div class="video-title">${video.title}</div>
-            <video controls src="${video.value}"></video>
-          </div>
-        `;
-      }).join("");
+      const mediaHTML = (SITE.media || []).length
+        ? SITE.media.map((item, i) => renderMediaItem(item, i)).join("")
+        : `<div class="empty-media">ما فيه صور أو فيديوهات مضافة من لوحة الإدارة.</div>`;
 
       app.innerHTML = `
         <section class="page">
           <div class="card">
             <div class="card-inner">
               <div class="tag">🎁 تم فتح المفاجأة</div>
-              <h1>وصلتي للنهاية يا ${SITE.loverName}</h1>
+              <h1>${esc(SITE.final.title)} يا ${esc(SITE.loverName)}</h1>
 
-              <p class="hero-desc">
-                الحين بس ينكشف الخبر الحقيقي، بعد ما خلصتي كل الاختبارات.
-              </p>
+              <p class="hero-desc">${esc(SITE.final.desc)}</p>
 
-              <div class="secret-news">
-                🗞️ الخبر الحقيقي:
-                <br>
-                بكرا آخر دوام، وبكرا تسليم العهدة والسديري…
-                بس المفاجأة الأكبر إن فيه هدية وإهداء معمول لك أنتِ.
-              </div>
-
-              <div class="secret-news">
-                ${SITE.giftText}
-              </div>
+              <div class="secret-news">${esc(SITE.final.news)}</div>
+              <div class="secret-news">${esc(SITE.final.giftText)}</div>
 
               <div class="final-grid">
                 <div class="mini-card full">
                   <h3>💌 رسالتي لك</h3>
-                  <div class="letter">${SITE.finalLetter}</div>
+                  <div class="letter">${esc(SITE.final.letter)}</div>
                 </div>
 
                 <div class="mini-card">
                   <h3>🎵 الأغنية</h3>
-                  <p>
-                    شغلي الأغنية مع الرسالة.
-                    إذا ما اشتغلت، تأكدي إن ملف <b>song.mp3</b> جنب ملف الموقع.
-                  </p>
-                  <audio controls src="${SITE.songUrl}"></audio>
+                  ${
+                    SITE.songUrl
+                    ? `<audio controls src="${esc(SITE.songUrl)}"></audio>`
+                    : `<p>ما تم رفع أغنية حتى الآن. ارفعها من لوحة الإدارة.</p>`
+                  }
                 </div>
 
                 <div class="mini-card">
                   <h3>✨ أشياء مخفية في الرحلة</h3>
                   <div class="memory-list">
-                    ${SITE.memories.map(item => `<div class="memory">${item}</div>`).join("")}
+                    ${(SITE.memories || []).map(item => `<div class="memory">${esc(item)}</div>`).join("")}
                   </div>
                 </div>
 
                 <div class="mini-card full">
-                  <h3>🎬 الفيديوهات</h3>
-                  <div class="video-list">
-                    ${videosHTML}
-                  </div>
+                  <h3>🎬 الصور والفيديوهات</h3>
+                  <div class="media-list">${mediaHTML}</div>
                 </div>
               </div>
 
@@ -1253,11 +1476,56 @@
       `;
     }
 
-    function escapeForAttr(text) {
-      return String(text)
-        .replace(/\\/g, "\\\\")
-        .replace(/'/g, "\\'")
-        .replace(/"/g, "&quot;");
+    function renderMediaItem(item) {
+      const title = esc(item.title || "ملف");
+      const url = esc(item.url || "");
+
+      if (!url) {
+        return `
+          <div class="media-box">
+            <div class="media-title">${title}</div>
+            <div class="empty-media">هذا العنصر بدون رابط. ارفع الملف أو حط الرابط من الإدارة.</div>
+          </div>
+        `;
+      }
+
+      if (item.type === "youtube") {
+        const id = getYouTubeId(item.url);
+        return `
+          <div class="media-box">
+            <div class="media-title">${title}</div>
+            <iframe src="https://www.youtube.com/embed/${esc(id)}" allowfullscreen></iframe>
+          </div>
+        `;
+      }
+
+      if (item.type === "image") {
+        return `
+          <div class="media-box">
+            <div class="media-title">${title}</div>
+            <img src="${url}" alt="${title}">
+          </div>
+        `;
+      }
+
+      return `
+        <div class="media-box">
+          <div class="media-title">${title}</div>
+          <video controls src="${url}"></video>
+        </div>
+      `;
+    }
+
+    function getYouTubeId(value) {
+      const v = String(value || "").trim();
+      if (!v.includes("youtube") && !v.includes("youtu.be")) return v;
+      try {
+        const url = new URL(v);
+        if (url.hostname.includes("youtu.be")) return url.pathname.replace("/", "");
+        return url.searchParams.get("v") || v;
+      } catch {
+        return v;
+      }
     }
 
     function miniConfetti() {
@@ -1272,7 +1540,6 @@
         piece.style.animationDuration = (1.2 + Math.random() * 1.2) + "s";
         piece.style.transform = `rotate(${Math.random() * 180}deg)`;
         area.appendChild(piece);
-
         setTimeout(() => piece.remove(), 2600);
       }
     }
@@ -1281,7 +1548,7 @@
       const area = document.getElementById("confettiArea");
       const colors = ["#ff2525", "#ff6868", "#b30000", "#ffd27d", "#ffffff", "#85ffbd"];
 
-      for (let i = 0; i < 100; i++) {
+      for (let i = 0; i < 85; i++) {
         const piece = document.createElement("div");
         piece.className = "confetti";
         piece.style.left = Math.random() * 100 + "%";
@@ -1290,7 +1557,6 @@
         piece.style.animationDelay = (Math.random() * .25) + "s";
         piece.style.transform = `rotate(${Math.random() * 360}deg)`;
         area.appendChild(piece);
-
         setTimeout(() => piece.remove(), 4200);
       }
     }
@@ -1311,6 +1577,20 @@
       }
     }
 
+    function secretSkip() {
+      secretSkipClicks++;
+      clearTimeout(secretSkipTimer);
+
+      secretSkipTimer = setTimeout(() => {
+        secretSkipClicks = 0;
+      }, 1800);
+
+      if (secretSkipClicks >= 5) {
+        secretSkipClicks = 0;
+        setStep(SITE.tests.length + 1);
+      }
+    }
+
     function resetJourney() {
       const ok = confirm("تبغى ترجع الرحلة من البداية؟");
       if (!ok) return;
@@ -1322,8 +1602,709 @@
       render();
     }
 
+    /************************************************************
+      لوحة الإدارة
+    ************************************************************/
+
+    function isAdminRoute() {
+      return new URLSearchParams(location.search).has("admin");
+    }
+
+    function renderAdmin(status = "") {
+      if (!isAdminRoute()) return;
+
+      adminPanel.classList.remove("hidden");
+
+      if (!adminLogged) {
+        adminPanel.innerHTML = `
+          <div class="admin-box">
+            <div class="admin-head">
+              <div class="admin-title">لوحة الإدارة</div>
+              <button class="secondary" onclick="closeAdmin()">إغلاق</button>
+            </div>
+            <div class="admin-body">
+              <div class="admin-card">
+                <div class="field">
+                  <label>كلمة مرور الإدارة</label>
+                  <input id="adminPass" type="password" placeholder="اكتب كلمة المرور">
+                </div>
+                <div class="buttons">
+                  <button onclick="adminLogin()">دخول</button>
+                </div>
+                <div class="admin-status">${esc(status)}</div>
+              </div>
+            </div>
+          </div>
+        `;
+
+        setTimeout(() => {
+          const pass = document.getElementById("adminPass");
+          if (pass) {
+            pass.focus();
+            pass.addEventListener("keydown", e => {
+              if (e.key === "Enter") adminLogin();
+            });
+          }
+        }, 50);
+        return;
+      }
+
+      adminPanel.innerHTML = `
+        <div class="admin-box">
+          <div class="admin-head">
+            <div>
+              <div class="admin-title">لوحة الإدارة السحابية</div>
+              <div class="small">أي تعديل تحفظه هنا يظهر عند الكل مباشرة عبر Firebase.</div>
+            </div>
+            <div class="admin-row">
+              <button class="secondary" onclick="saveAll()">حفظ سريع</button>
+              <button class="secondary" onclick="logoutAdmin()">خروج</button>
+              <button class="secondary" onclick="closeAdmin()">إغلاق</button>
+            </div>
+          </div>
+
+          <div class="admin-body">
+            <div class="tabs">
+              ${tabButton("general", "الإعدادات")}
+              ${tabButton("final", "النهاية والرسالة")}
+              ${tabButton("media", "الرفع والملفات")}
+              ${tabButton("tests", "الاختبارات")}
+              ${tabButton("backup", "نسخة احتياطية")}
+            </div>
+
+            <div id="adminContent"></div>
+            <div class="admin-status" id="adminStatus">${esc(status)}</div>
+          </div>
+        </div>
+      `;
+
+      renderAdminContent();
+    }
+
+    function tabButton(id, label) {
+      return `<button class="tab-btn ${adminTab === id ? "active" : ""}" onclick="setAdminTab('${id}')">${label}</button>`;
+    }
+
+    function renderAdminContent() {
+      if (adminTab === "general") renderAdminGeneral();
+      if (adminTab === "final") renderAdminFinal();
+      if (adminTab === "media") renderAdminMedia();
+      if (adminTab === "tests") renderAdminTests();
+      if (adminTab === "backup") renderAdminBackup();
+    }
+
+    function setAdminStatus(text, good = true) {
+      const box = document.getElementById("adminStatus");
+      if (!box) return;
+      box.style.color = good ? "var(--gold)" : "var(--bad)";
+      box.textContent = text;
+    }
+
+    function setAdminTab(tab) {
+      adminTab = tab;
+      renderAdmin();
+    }
+
+    function adminLogin() {
+      const pass = document.getElementById("adminPass")?.value || "";
+      if (pass === ADMIN_PASSWORD) {
+        adminLogged = true;
+        localStorage.setItem("love_admin_logged", "1");
+        createDefaultIfMissing().catch(() => {});
+        renderAdmin("تم الدخول بنجاح.");
+      } else {
+        renderAdmin("كلمة المرور غلط.");
+      }
+    }
+
+    function logoutAdmin() {
+      adminLogged = false;
+      localStorage.removeItem("love_admin_logged");
+      renderAdmin("تم تسجيل الخروج.");
+    }
+
+    function closeAdmin() {
+      adminPanel.classList.add("hidden");
+      if (location.search.includes("admin")) {
+        history.replaceState({}, "", location.pathname + location.hash);
+      }
+    }
+
+    async function saveConfig(newSite = SITE) {
+      try {
+        await setDoc(configRef, {
+          ...newSite,
+          updatedAt: serverTimestamp()
+        }, { merge: true });
+        setAdminStatus("تم الحفظ سحابيًا، والتعديل ظهر عند الكل.");
+      } catch (err) {
+        console.error(err);
+        setAdminStatus("فشل الحفظ: " + err.message, false);
+      }
+    }
+
+    async function saveAll() {
+      await saveConfig(SITE);
+    }
+
+    function renderAdminGeneral() {
+      document.getElementById("adminContent").innerHTML = `
+        <div class="admin-card">
+          <div class="form-grid">
+            <div class="field">
+              <label>عنوان الموقع</label>
+              <input id="siteTitle" value="${esc(SITE.title)}">
+            </div>
+            <div class="field">
+              <label>رابط الشعار</label>
+              <input id="logoUrl" value="${esc(SITE.logoUrl)}" placeholder="ارفع شعار من صفحة الرفع أو حط رابط">
+            </div>
+            <div class="field">
+              <label>اسمها</label>
+              <input id="loverName" value="${esc(SITE.loverName)}">
+            </div>
+            <div class="field">
+              <label>اسمك</label>
+              <input id="senderName" value="${esc(SITE.senderName)}">
+            </div>
+            <div class="field">
+              <label>لون الخلفية 1</label>
+              <input id="bg1" type="color" value="${esc(SITE.theme.bg1)}">
+            </div>
+            <div class="field">
+              <label>لون الخلفية 2</label>
+              <input id="bg2" type="color" value="${esc(SITE.theme.bg2)}">
+            </div>
+            <div class="field">
+              <label>لون الخلفية 3</label>
+              <input id="bg3" type="color" value="${esc(SITE.theme.bg3)}">
+            </div>
+            <div class="field">
+              <label>اللون الأساسي</label>
+              <input id="mainColor" type="color" value="${esc(SITE.theme.main)}">
+            </div>
+            <div class="field">
+              <label>اللون الثانوي</label>
+              <input id="main2Color" type="color" value="${esc(SITE.theme.main2)}">
+            </div>
+            <div class="field">
+              <label>الذهبي</label>
+              <input id="goldColor" type="color" value="${esc(SITE.theme.gold)}">
+            </div>
+          </div>
+        </div>
+
+        <div class="admin-card">
+          <div class="form-grid one">
+            <div class="field">
+              <label>عنوان البداية</label>
+              <input id="introTitle" value="${esc(SITE.intro.title)}">
+            </div>
+            <div class="field">
+              <label>وصف البداية</label>
+              <textarea id="introDesc">${esc(SITE.intro.desc)}</textarea>
+            </div>
+            <div class="field">
+              <label>عنوان الخبر المقفل</label>
+              <input id="lockedTitle" value="${esc(SITE.intro.lockedTitle)}">
+            </div>
+            <div class="field">
+              <label>وصف الخبر المقفل</label>
+              <textarea id="lockedDesc">${esc(SITE.intro.lockedDesc)}</textarea>
+            </div>
+          </div>
+
+          <div class="buttons">
+            <button onclick="saveGeneral()">حفظ الإعدادات</button>
+          </div>
+        </div>
+      `;
+    }
+
+    function saveGeneral() {
+      SITE.title = val("siteTitle");
+      SITE.logoUrl = val("logoUrl");
+      SITE.loverName = val("loverName");
+      SITE.senderName = val("senderName");
+      SITE.theme.bg1 = val("bg1");
+      SITE.theme.bg2 = val("bg2");
+      SITE.theme.bg3 = val("bg3");
+      SITE.theme.bg4 = SITE.theme.bg4 || "#190000";
+      SITE.theme.main = val("mainColor");
+      SITE.theme.main2 = val("main2Color");
+      SITE.theme.gold = val("goldColor");
+      SITE.intro.title = val("introTitle");
+      SITE.intro.desc = val("introDesc");
+      SITE.intro.lockedTitle = val("lockedTitle");
+      SITE.intro.lockedDesc = val("lockedDesc");
+      saveConfig(SITE);
+    }
+
+    function renderAdminFinal() {
+      document.getElementById("adminContent").innerHTML = `
+        <div class="admin-card">
+          <div class="form-grid one">
+            <div class="field">
+              <label>عنوان صفحة النهاية</label>
+              <input id="finalTitle" value="${esc(SITE.final.title)}">
+            </div>
+            <div class="field">
+              <label>وصف النهاية</label>
+              <textarea id="finalDesc">${esc(SITE.final.desc)}</textarea>
+            </div>
+            <div class="field">
+              <label>الخبر الحقيقي</label>
+              <textarea id="finalNews">${esc(SITE.final.news)}</textarea>
+            </div>
+            <div class="field">
+              <label>نص الهدية</label>
+              <textarea id="giftText">${esc(SITE.final.giftText)}</textarea>
+            </div>
+            <div class="field">
+              <label>الرسالة الطويلة</label>
+              <textarea id="finalLetter" style="min-height:260px">${esc(SITE.final.letter)}</textarea>
+            </div>
+            <div class="field">
+              <label>أشياء مخفية / ذكريات، كل سطر عنصر</label>
+              <textarea id="memoriesText">${esc((SITE.memories || []).join("\n"))}</textarea>
+            </div>
+            <div class="field">
+              <label>رابط الأغنية</label>
+              <input id="songUrlInput" value="${esc(SITE.songUrl)}" placeholder="ارفع أغنية من صفحة الرفع أو حط رابط">
+            </div>
+          </div>
+
+          <div class="buttons">
+            <button onclick="saveFinal()">حفظ النهاية</button>
+          </div>
+        </div>
+      `;
+    }
+
+    function saveFinal() {
+      SITE.final.title = val("finalTitle");
+      SITE.final.desc = val("finalDesc");
+      SITE.final.news = val("finalNews");
+      SITE.final.giftText = val("giftText");
+      SITE.final.letter = val("finalLetter");
+      SITE.songUrl = val("songUrlInput");
+      SITE.memories = lines("memoriesText");
+      saveConfig(SITE);
+    }
+
+    function renderAdminMedia() {
+      const mediaList = (SITE.media || []).map((item, i) => `
+        <div class="list-item">
+          <div>
+            <div class="list-item-title">${esc(item.title || "بدون عنوان")}</div>
+            <div class="small">${esc(item.type || "video")} - ${esc(item.url || "بدون رابط")}</div>
+          </div>
+          <div class="admin-row">
+            <button class="secondary" onclick="moveMedia(${i}, -1)">فوق</button>
+            <button class="secondary" onclick="moveMedia(${i}, 1)">تحت</button>
+            <button class="danger" onclick="removeMedia(${i})">حذف</button>
+          </div>
+        </div>
+      `).join("");
+
+      document.getElementById("adminContent").innerHTML = `
+        <div class="admin-card">
+          <h3 style="margin-top:0;color:var(--gold)">رفع ملفات للسحابة</h3>
+          <p class="small">الفيديوهات الكبيرة ترفع عبر Firebase Storage مع شريط تقدم. السرعة حسب النت وحجم الملف.</p>
+
+          <div class="form-grid">
+            <div class="field">
+              <label>اختر ملف</label>
+              <input id="uploadFile" type="file" accept="image/*,video/*,audio/*">
+            </div>
+            <div class="field">
+              <label>عنوان الملف</label>
+              <input id="uploadTitle" placeholder="مثال: فيديو الإهداء">
+            </div>
+            <div class="field">
+              <label>نوع الاستخدام</label>
+              <select id="uploadTarget">
+                <option value="media">إضافة للصور والفيديوهات</option>
+                <option value="logo">جعله شعار الموقع</option>
+                <option value="song">جعله الأغنية</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="buttons">
+            <button onclick="uploadSelectedFile()">رفع الملف</button>
+          </div>
+
+          <div class="upload-progress"><span id="uploadBar"></span></div>
+          <div class="admin-status" id="uploadStatus"></div>
+        </div>
+
+        <div class="admin-card">
+          <h3 style="margin-top:0;color:var(--gold)">إضافة يوتيوب أو رابط مباشر</h3>
+          <div class="form-grid">
+            <div class="field">
+              <label>العنوان</label>
+              <input id="manualTitle" placeholder="عنوان الفيديو أو الصورة">
+            </div>
+            <div class="field">
+              <label>النوع</label>
+              <select id="manualType">
+                <option value="youtube">YouTube</option>
+                <option value="video">رابط فيديو مباشر</option>
+                <option value="image">رابط صورة مباشر</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>الرابط أو ID يوتيوب</label>
+              <input id="manualUrl" placeholder="https://... أو ID">
+            </div>
+          </div>
+          <div class="buttons">
+            <button onclick="addManualMedia()">إضافة</button>
+          </div>
+        </div>
+
+        <div class="admin-card">
+          <h3 style="margin-top:0;color:var(--gold)">الملفات الحالية</h3>
+          ${mediaList || `<div class="empty-media">لا توجد ملفات حتى الآن.</div>`}
+        </div>
+      `;
+    }
+
+    async function uploadSelectedFile() {
+      const file = document.getElementById("uploadFile")?.files?.[0];
+      const title = val("uploadTitle");
+      const target = val("uploadTarget");
+      const bar = document.getElementById("uploadBar");
+      const status = document.getElementById("uploadStatus");
+
+      if (!file) {
+        status.textContent = "اختر ملف أول.";
+        return;
+      }
+
+      const safeName = file.name.replace(/[^\w.\-\u0600-\u06FF]/g, "_");
+      const path = `love-site/${target}/${Date.now()}_${safeName}`;
+      const fileRef = ref(storage, path);
+
+      status.textContent = "بدأ الرفع...";
+      bar.style.width = "0%";
+
+      const task = uploadBytesResumable(fileRef, file);
+
+      task.on("state_changed", snap => {
+        const percent = Math.round((snap.bytesTransferred / snap.totalBytes) * 100);
+        bar.style.width = percent + "%";
+        status.textContent = `جاري الرفع: ${percent}%`;
+      }, err => {
+        console.error(err);
+        status.textContent = "فشل الرفع: " + err.message;
+      }, async () => {
+        const url = await getDownloadURL(task.snapshot.ref);
+
+        if (target === "logo") {
+          SITE.logoUrl = url;
+        } else if (target === "song") {
+          SITE.songUrl = url;
+        } else {
+          const type = file.type.startsWith("image/") ? "image" : "video";
+          SITE.media = SITE.media || [];
+          SITE.media.push({
+            title: title || file.name,
+            type,
+            url
+          });
+        }
+
+        await saveConfig(SITE);
+        status.textContent = "تم الرفع والحفظ بنجاح.";
+        bar.style.width = "100%";
+        renderAdminMedia();
+      });
+    }
+
+    function addManualMedia() {
+      const title = val("manualTitle") || "ملف";
+      const type = val("manualType");
+      const url = val("manualUrl");
+
+      if (!url) {
+        setAdminStatus("حط الرابط أول.", false);
+        return;
+      }
+
+      SITE.media = SITE.media || [];
+      SITE.media.push({ title, type, url });
+      saveConfig(SITE).then(renderAdminMedia);
+    }
+
+    function removeMedia(i) {
+      if (!confirm("حذف هذا العنصر من الموقع؟")) return;
+      SITE.media.splice(i, 1);
+      saveConfig(SITE).then(renderAdminMedia);
+    }
+
+    function moveMedia(i, dir) {
+      const ni = i + dir;
+      if (ni < 0 || ni >= SITE.media.length) return;
+      const temp = SITE.media[i];
+      SITE.media[i] = SITE.media[ni];
+      SITE.media[ni] = temp;
+      saveConfig(SITE).then(renderAdminMedia);
+    }
+
+    function renderAdminTests() {
+      const testsList = (SITE.tests || []).map((test, i) => `
+        <div class="list-item">
+          <div>
+            <div class="list-item-title">${i + 1}. ${esc(test.title || "اختبار")}</div>
+            <div class="small">${esc(test.type || "text")} - ${esc(test.question || "")}</div>
+          </div>
+          <div class="admin-row">
+            <button class="secondary" onclick="editTest(${i})">تعديل</button>
+            <button class="secondary" onclick="moveTest(${i}, -1)">فوق</button>
+            <button class="secondary" onclick="moveTest(${i}, 1)">تحت</button>
+            <button class="danger" onclick="deleteTest(${i})">حذف</button>
+          </div>
+        </div>
+      `).join("");
+
+      const test = SITE.tests[editingTestIndex] || {
+        type: "text",
+        title: "",
+        badge: "",
+        question: "",
+        placeholder: "",
+        choices: [],
+        boxes: [],
+        answers: [],
+        hint: ""
+      };
+
+      document.getElementById("adminContent").innerHTML = `
+        <div class="admin-card">
+          <div class="admin-row">
+            <button onclick="addTest()">إضافة اختبار جديد</button>
+            <button class="secondary" onclick="saveTestEditor()">حفظ الاختبار الحالي</button>
+          </div>
+        </div>
+
+        <div class="admin-card">
+          <h3 style="margin-top:0;color:var(--gold)">تعديل اختبار رقم ${editingTestIndex + 1}</h3>
+
+          <div class="form-grid">
+            <div class="field">
+              <label>نوع الاختبار</label>
+              <select id="testType">
+                <option value="text" ${test.type === "text" ? "selected" : ""}>كتابة جواب</option>
+                <option value="choice" ${test.type === "choice" ? "selected" : ""}>اختيارات</option>
+                <option value="box" ${test.type === "box" ? "selected" : ""}>لعبة صناديق سهلة</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>العنوان</label>
+              <input id="testTitle" value="${esc(test.title)}">
+            </div>
+            <div class="field">
+              <label>الشارة</label>
+              <input id="testBadge" value="${esc(test.badge)}">
+            </div>
+            <div class="field">
+              <label>Placeholder للكتابة</label>
+              <input id="testPlaceholder" value="${esc(test.placeholder || "")}">
+            </div>
+          </div>
+
+          <div class="form-grid one" style="margin-top:14px">
+            <div class="field">
+              <label>السؤال</label>
+              <textarea id="testQuestion">${esc(test.question)}</textarea>
+            </div>
+            <div class="field">
+              <label>الاختيارات، كل سطر اختيار</label>
+              <textarea id="testChoices">${esc((test.choices || []).join("\n"))}</textarea>
+            </div>
+            <div class="field">
+              <label>الصناديق، كل سطر بهذا الشكل: الرمز|القيمة</label>
+              <textarea id="testBoxes">${esc((test.boxes || []).map(b => `${b.icon}|${b.value}`).join("\n"))}</textarea>
+            </div>
+            <div class="field">
+              <label>الإجابات الصحيحة، كل سطر جواب مقبول</label>
+              <textarea id="testAnswers">${esc((test.answers || []).join("\n"))}</textarea>
+            </div>
+            <div class="field">
+              <label>التلميح</label>
+              <textarea id="testHint">${esc(test.hint)}</textarea>
+            </div>
+          </div>
+
+          <div class="buttons">
+            <button onclick="saveTestEditor()">حفظ هذا الاختبار</button>
+          </div>
+        </div>
+
+        <div class="admin-card">
+          <h3 style="margin-top:0;color:var(--gold)">كل الاختبارات</h3>
+          ${testsList || `<div class="empty-media">لا توجد اختبارات.</div>`}
+        </div>
+      `;
+    }
+
+    function editTest(i) {
+      editingTestIndex = i;
+      renderAdminTests();
+    }
+
+    function addTest() {
+      SITE.tests.push({
+        type: "choice",
+        title: "اختبار جديد",
+        badge: "جديد",
+        question: "اكتب السؤال هنا",
+        placeholder: "",
+        choices: ["اختيار 1", "اختيار 2"],
+        boxes: [
+          { icon: "🎁", value: "هدية" },
+          { icon: "❤️", value: "قلب" },
+          { icon: "⭐", value: "نجمة" }
+        ],
+        answers: ["اختيار 1"],
+        hint: "اكتب التلميح هنا"
+      });
+
+      editingTestIndex = SITE.tests.length - 1;
+      saveConfig(SITE).then(renderAdminTests);
+    }
+
+    function saveTestEditor() {
+      if (!SITE.tests[editingTestIndex]) return;
+
+      SITE.tests[editingTestIndex] = {
+        type: val("testType"),
+        title: val("testTitle"),
+        badge: val("testBadge"),
+        question: val("testQuestion"),
+        placeholder: val("testPlaceholder"),
+        choices: lines("testChoices"),
+        boxes: parseBoxes(val("testBoxes")),
+        answers: lines("testAnswers"),
+        hint: val("testHint")
+      };
+
+      saveConfig(SITE).then(renderAdminTests);
+    }
+
+    function parseBoxes(text) {
+      return String(text || "")
+        .split("\n")
+        .map(x => x.trim())
+        .filter(Boolean)
+        .map(line => {
+          const [icon, ...rest] = line.split("|");
+          return {
+            icon: (icon || "🎁").trim(),
+            value: (rest.join("|") || icon || "قيمة").trim()
+          };
+        });
+    }
+
+    function deleteTest(i) {
+      if (!confirm("حذف هذا الاختبار؟")) return;
+      SITE.tests.splice(i, 1);
+      editingTestIndex = Math.max(0, Math.min(editingTestIndex, SITE.tests.length - 1));
+      saveConfig(SITE).then(renderAdminTests);
+    }
+
+    function moveTest(i, dir) {
+      const ni = i + dir;
+      if (ni < 0 || ni >= SITE.tests.length) return;
+      const temp = SITE.tests[i];
+      SITE.tests[i] = SITE.tests[ni];
+      SITE.tests[ni] = temp;
+      editingTestIndex = ni;
+      saveConfig(SITE).then(renderAdminTests);
+    }
+
+    function renderAdminBackup() {
+      document.getElementById("adminContent").innerHTML = `
+        <div class="admin-card">
+          <h3 style="margin-top:0;color:var(--gold)">نسخة احتياطية</h3>
+          <p class="small">انسخ البيانات قبل أي تعديل كبير. تقدر ترجعها بأي وقت.</p>
+          <textarea id="backupText" style="min-height:360px" dir="ltr">${esc(JSON.stringify(SITE, null, 2))}</textarea>
+          <div class="buttons">
+            <button onclick="copyBackup()">نسخ</button>
+            <button class="secondary" onclick="restoreBackup()">استرجاع من النص</button>
+            <button class="danger" onclick="resetCloudDefault()">إرجاع الافتراضي</button>
+          </div>
+        </div>
+      `;
+    }
+
+    async function copyBackup() {
+      const text = val("backupText");
+      await navigator.clipboard.writeText(text);
+      setAdminStatus("تم نسخ النسخة الاحتياطية.");
+    }
+
+    function restoreBackup() {
+      try {
+        const parsed = JSON.parse(val("backupText"));
+        SITE = mergeSite(DEFAULT_SITE, parsed);
+        saveConfig(SITE).then(() => renderAdmin("تم استرجاع النسخة."));
+      } catch (err) {
+        setAdminStatus("النص ليس JSON صحيح.", false);
+      }
+    }
+
+    function resetCloudDefault() {
+      if (!confirm("متأكد ترجع كل شيء للوضع الافتراضي؟")) return;
+      SITE = structuredCloneSafe(DEFAULT_SITE);
+      saveConfig(SITE).then(() => renderAdmin("تم إرجاع الافتراضي."));
+    }
+
+    function val(id) {
+      return document.getElementById(id)?.value || "";
+    }
+
+    function lines(id) {
+      return val(id)
+        .split("\n")
+        .map(x => x.trim())
+        .filter(Boolean);
+    }
+
     makeHearts();
-    render();
+
+    if (isAdminRoute()) renderAdmin();
+
+    window.setStep = setStep;
+    window.resetJourney = resetJourney;
+    window.secretSkip = secretSkip;
+    window.checkTextAnswer = checkTextAnswer;
+    window.checkChoiceAnswer = checkChoiceAnswer;
+    window.checkBoxAnswer = checkBoxAnswer;
+    window.showHint = showHint;
+    window.fireConfetti = fireConfetti;
+
+    window.closeAdmin = closeAdmin;
+    window.adminLogin = adminLogin;
+    window.logoutAdmin = logoutAdmin;
+    window.setAdminTab = setAdminTab;
+    window.saveAll = saveAll;
+    window.saveGeneral = saveGeneral;
+    window.saveFinal = saveFinal;
+    window.uploadSelectedFile = uploadSelectedFile;
+    window.addManualMedia = addManualMedia;
+    window.removeMedia = removeMedia;
+    window.moveMedia = moveMedia;
+    window.editTest = editTest;
+    window.addTest = addTest;
+    window.saveTestEditor = saveTestEditor;
+    window.deleteTest = deleteTest;
+    window.moveTest = moveTest;
+    window.copyBackup = copyBackup;
+    window.restoreBackup = restoreBackup;
+    window.resetCloudDefault = resetCloudDefault;
   </script>
 </body>
 </html>
