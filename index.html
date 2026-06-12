@@ -136,6 +136,12 @@
       margin-bottom: 16px;
     }
 
+    .top-actions {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
     .brand {
       display: flex;
       align-items: center;
@@ -378,6 +384,7 @@
       border: 1px dashed rgba(255,210,125,.75);
       background: rgba(255,210,125,.11);
       font-weight: 900;
+      white-space: pre-line;
     }
 
     .buttons {
@@ -763,6 +770,11 @@
         flex-direction: column;
       }
 
+      .top-actions {
+        flex-direction: column;
+        width: 100%;
+      }
+
       .brand,
       .reset-btn,
       button {
@@ -789,6 +801,11 @@
       .step-mini {
         text-align: right;
       }
+
+      .list-item {
+        flex-direction: column;
+        align-items: stretch;
+      }
     }
   </style>
 </head>
@@ -806,7 +823,10 @@
         <div id="brandText">رحلة المفاجأة</div>
       </div>
 
-      <button class="reset-btn" onclick="resetJourney()">إعادة الرحلة</button>
+      <div class="top-actions">
+        <button class="reset-btn" onclick="openAdminFromSite()">الإدارة</button>
+        <button class="reset-btn" onclick="resetJourney()">إعادة الرحلة</button>
+      </div>
     </div>
 
     <div class="progress-box">
@@ -836,17 +856,18 @@
       onSnapshot,
       serverTimestamp
     } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
-    import {
-      getStorage,
-      ref,
-      uploadBytesResumable,
-      getDownloadURL
-    } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-storage.js";
 
     /************************************************************
       إعدادات مهمة
+      - الإدارة من زر الإدارة داخل الموقع
+      - كلمة المرور: 500500
+      - الرفع في هذه النسخة عبر Cloudinary، بدون Firebase Storage
     ************************************************************/
     const ADMIN_PASSWORD = "500500";
+
+    // اختياري للرفع: حط بيانات Cloudinary هنا عشان تقدر ترفع فيديو/صور/أغنية من لوحة الإدارة
+    const CLOUDINARY_CLOUD_NAME = "dsyy8fejc";
+    const CLOUDINARY_UPLOAD_PRESET = "yuriiiiiiiiiii";
 
     const firebaseConfig = {
       apiKey: "AIzaSyDsj7ozg8unLTulCysLToP7fTWF4O_wkFQ",
@@ -864,7 +885,6 @@
     }).catch(() => {});
 
     const db = getFirestore(firebaseApp);
-    const storage = getStorage(firebaseApp);
     const configRef = doc(db, "love_site", "main_config");
 
     const DEFAULT_SITE = {
@@ -923,13 +943,7 @@
         "العهدة تتسلّم، والسديري يرجع، بس مكانك لا يتغير.",
         "أنتِ الهدية قبل الهدية."
       ],
-      media: [
-        {
-          title: "فيديو الإهداء الأول",
-          type: "video",
-          url: ""
-        }
-      ],
+      media: [],
       tests: [
         {
           type: "choice",
@@ -1085,6 +1099,7 @@
     let secretSkipTimer = null;
 
     let adminLogged = localStorage.getItem("love_admin_logged") === "1";
+    let adminOpen = false;
     let adminTab = "general";
     let editingTestIndex = 0;
 
@@ -1129,7 +1144,7 @@
     }
 
     function mergeSite(base, data) {
-      const merged = {
+      return {
         ...structuredCloneSafe(base),
         ...data,
         theme: { ...base.theme, ...(data.theme || {}) },
@@ -1139,7 +1154,6 @@
         media: Array.isArray(data.media) ? data.media : base.media,
         tests: Array.isArray(data.tests) ? data.tests : base.tests
       };
-      return merged;
     }
 
     function applyTheme() {
@@ -1423,7 +1437,7 @@
       fireConfetti();
 
       const mediaHTML = (SITE.media || []).length
-        ? SITE.media.map((item, i) => renderMediaItem(item, i)).join("")
+        ? SITE.media.map(item => renderMediaItem(item)).join("")
         : `<div class="empty-media">ما فيه صور أو فيديوهات مضافة من لوحة الإدارة.</div>`;
 
       app.innerHTML = `
@@ -1607,7 +1621,12 @@
     ************************************************************/
 
     function isAdminRoute() {
-      return new URLSearchParams(location.search).has("admin");
+      return adminOpen || new URLSearchParams(location.search).has("admin");
+    }
+
+    function openAdminFromSite() {
+      adminOpen = true;
+      renderAdmin();
     }
 
     function renderAdmin(status = "") {
@@ -1724,7 +1743,9 @@
     }
 
     function closeAdmin() {
+      adminOpen = false;
       adminPanel.classList.add("hidden");
+
       if (location.search.includes("admin")) {
         history.replaceState({}, "", location.pathname + location.hash);
       }
@@ -1909,8 +1930,11 @@
 
       document.getElementById("adminContent").innerHTML = `
         <div class="admin-card">
-          <h3 style="margin-top:0;color:var(--gold)">رفع ملفات للسحابة</h3>
-          <p class="small">الفيديوهات الكبيرة ترفع عبر Firebase Storage مع شريط تقدم. السرعة حسب النت وحجم الملف.</p>
+          <h3 style="margin-top:0;color:var(--gold)">رفع ملفات</h3>
+          <p class="small">
+            هذه النسخة ترفع عبر Cloudinary. اكتب CLOUDINARY_CLOUD_NAME و CLOUDINARY_UPLOAD_PRESET داخل الكود.
+            لو ما عندك، استخدم خانة "إضافة رابط مباشر" تحت.
+          </p>
 
           <div class="form-grid">
             <div class="field">
@@ -1983,31 +2007,62 @@
         return;
       }
 
-      const safeName = file.name.replace(/[^\w.\-\u0600-\u06FF]/g, "_");
-      const path = `love-site/${target}/${Date.now()}_${safeName}`;
-      const fileRef = ref(storage, path);
+      if (!CLOUDINARY_CLOUD_NAME || !CLOUDINARY_UPLOAD_PRESET) {
+        status.textContent = "الرفع يحتاج Cloudinary. حط CLOUDINARY_CLOUD_NAME و CLOUDINARY_UPLOAD_PRESET داخل الكود، أو استخدم إضافة رابط مباشر.";
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
+      formData.append("folder", "love-site");
 
       status.textContent = "بدأ الرفع...";
       bar.style.width = "0%";
 
-      const task = uploadBytesResumable(fileRef, file);
+      const uploadUrl = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/auto/upload`;
+      const xhr = new XMLHttpRequest();
+      xhr.open("POST", uploadUrl);
 
-      task.on("state_changed", snap => {
-        const percent = Math.round((snap.bytesTransferred / snap.totalBytes) * 100);
-        bar.style.width = percent + "%";
-        status.textContent = `جاري الرفع: ${percent}%`;
-      }, err => {
-        console.error(err);
-        status.textContent = "فشل الرفع: " + err.message;
-      }, async () => {
-        const url = await getDownloadURL(task.snapshot.ref);
+      xhr.upload.onprogress = function (event) {
+        if (event.lengthComputable) {
+          const percent = Math.round((event.loaded / event.total) * 100);
+          bar.style.width = percent + "%";
+          status.textContent = `جاري الرفع: ${percent}%`;
+        }
+      };
+
+      xhr.onload = async function () {
+        if (xhr.status < 200 || xhr.status >= 300) {
+          status.textContent = "فشل الرفع: " + xhr.responseText;
+          return;
+        }
+
+        const data = JSON.parse(xhr.responseText);
+        const url = data.secure_url;
+
+        if (!url) {
+          status.textContent = "تم الرفع لكن ما رجع رابط.";
+          return;
+        }
 
         if (target === "logo") {
           SITE.logoUrl = url;
         } else if (target === "song") {
           SITE.songUrl = url;
         } else {
-          const type = file.type.startsWith("image/") ? "image" : "video";
+          let type = "video";
+          if (file.type.startsWith("image/")) type = "image";
+          if (file.type.startsWith("video/")) type = "video";
+          if (file.type.startsWith("audio/")) {
+            SITE.songUrl = url;
+            await saveConfig(SITE);
+            status.textContent = "تم رفع الصوت وجعله الأغنية.";
+            bar.style.width = "100%";
+            renderAdminMedia();
+            return;
+          }
+
           SITE.media = SITE.media || [];
           SITE.media.push({
             title: title || file.name,
@@ -2020,7 +2075,13 @@
         status.textContent = "تم الرفع والحفظ بنجاح.";
         bar.style.width = "100%";
         renderAdminMedia();
-      });
+      };
+
+      xhr.onerror = function () {
+        status.textContent = "فشل الاتصال أثناء الرفع.";
+      };
+
+      xhr.send(formData);
     }
 
     function addManualMedia() {
@@ -2275,7 +2336,10 @@
 
     makeHearts();
 
-    if (isAdminRoute()) renderAdmin();
+    if (new URLSearchParams(location.search).has("admin")) {
+      adminOpen = true;
+      renderAdmin();
+    }
 
     window.setStep = setStep;
     window.resetJourney = resetJourney;
@@ -2286,6 +2350,7 @@
     window.showHint = showHint;
     window.fireConfetti = fireConfetti;
 
+    window.openAdminFromSite = openAdminFromSite;
     window.closeAdmin = closeAdmin;
     window.adminLogin = adminLogin;
     window.logoutAdmin = logoutAdmin;
