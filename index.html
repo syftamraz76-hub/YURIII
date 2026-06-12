@@ -763,6 +763,67 @@
       font-weight: 800;
     }
 
+
+    .log-toolbar {
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+
+    .log-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .log-item {
+      background: rgba(0,0,0,.24);
+      border: 1px solid rgba(255,255,255,.14);
+      border-radius: 18px;
+      padding: 13px;
+      line-height: 1.7;
+    }
+
+    .log-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 8px;
+    }
+
+    .log-type {
+      color: #2b0505;
+      background: linear-gradient(135deg, var(--main2), var(--gold));
+      padding: 5px 10px;
+      border-radius: 999px;
+      font-weight: 900;
+      font-size: 13px;
+    }
+
+    .log-time {
+      color: rgba(255,255,255,.65);
+      font-weight: 800;
+      font-size: 13px;
+    }
+
+    .log-json {
+      direction: ltr;
+      text-align: left;
+      white-space: pre-wrap;
+      word-break: break-word;
+      background: rgba(0,0,0,.28);
+      border: 1px solid rgba(255,255,255,.10);
+      border-radius: 14px;
+      padding: 10px;
+      color: rgba(255,255,255,.78);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 12px;
+      max-height: 240px;
+      overflow: auto;
+    }
+
     @media (max-width: 820px) {
       .topbar,
       .admin-head {
@@ -805,6 +866,10 @@
       .list-item {
         flex-direction: column;
         align-items: stretch;
+      }
+
+      .log-toolbar {
+        grid-template-columns: 1fr;
       }
     }
   </style>
@@ -854,7 +919,14 @@
       getDoc,
       setDoc,
       onSnapshot,
-      serverTimestamp
+      serverTimestamp,
+      collection,
+      addDoc,
+      query,
+      orderBy,
+      limit,
+      getDocs,
+      deleteDoc
     } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
 
     /************************************************************
@@ -886,6 +958,7 @@
 
     const db = getFirestore(firebaseApp);
     const configRef = doc(db, "love_site", "main_config");
+    const eventsCol = collection(db, "love_site_events");
 
     const DEFAULT_SITE = {
       title: "رحلة المفاجأة",
@@ -1102,6 +1175,10 @@
     let adminOpen = false;
     let adminTab = "general";
     let editingTestIndex = 0;
+    let logsUnsubscribe = null;
+    let latestLogs = [];
+    const SESSION_ID = getOrCreateSessionId();
+    let sessionStartedLogged = sessionStorage.getItem("love_session_started") === "1";
 
     const app = document.getElementById("app");
     const progressBar = document.getElementById("progressBar");
@@ -1112,6 +1189,89 @@
     const footerText = document.getElementById("footerText");
     const adminPanel = document.getElementById("adminPanel");
 
+
+    function getOrCreateSessionId() {
+      let id = localStorage.getItem("love_session_id");
+      if (!id) {
+        id = "s_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 10);
+        localStorage.setItem("love_session_id", id);
+      }
+      return id;
+    }
+
+    function trimDeep(value) {
+      if (value === null || value === undefined) return value;
+      if (typeof value === "string") return value.slice(0, 900);
+      if (typeof value === "number" || typeof value === "boolean") return value;
+      if (Array.isArray(value)) return value.slice(0, 30).map(trimDeep);
+      if (typeof value === "object") {
+        const out = {};
+        Object.keys(value).slice(0, 40).forEach(key => out[key] = trimDeep(value[key]));
+        return out;
+      }
+      return String(value).slice(0, 900);
+    }
+
+    async function logEvent(type, details = {}) {
+      if (adminOpen) return;
+
+      try {
+        const currentTest = SITE.tests?.[Math.max(current - 1, 0)];
+        await addDoc(eventsCol, {
+          type,
+          sessionId: SESSION_ID,
+          currentStep: current,
+          stepTitle: current > SITE.tests.length ? "النهاية" : (currentTest?.title || "البداية"),
+          pageHash: location.hash || "start",
+          details: trimDeep(details),
+          createdAtMs: Date.now(),
+          createdAt: serverTimestamp(),
+          url: location.href,
+          userAgent: navigator.userAgent,
+          language: navigator.language,
+          screen: `${window.screen?.width || 0}x${window.screen?.height || 0}`
+        });
+      } catch (err) {
+        console.warn("logEvent failed:", err);
+      }
+    }
+
+    function logSessionStartOnce() {
+      if (sessionStartedLogged) return;
+      sessionStartedLogged = true;
+      sessionStorage.setItem("love_session_started", "1");
+      logEvent("session_start", {
+        title: SITE.title,
+        loverName: SITE.loverName,
+        referrer: document.referrer || "",
+        viewport: `${window.innerWidth}x${window.innerHeight}`,
+        online: navigator.onLine
+      });
+    }
+
+    document.addEventListener("click", event => {
+      if (event.target.closest("#adminPanel")) return;
+
+      const element = event.target.closest("button,a,[data-choice],[data-box]");
+      if (!element) return;
+
+      const label = (
+        element.dataset.choice ||
+        element.dataset.box ||
+        element.innerText ||
+        element.getAttribute("aria-label") ||
+        element.tagName
+      ).trim().slice(0, 160);
+
+      logEvent("click", {
+        label,
+        tag: element.tagName,
+        classes: element.className || "",
+        testIndex: current,
+        testTitle: SITE.tests?.[current - 1]?.title || ""
+      });
+    }, true);
+
     onSnapshot(configRef, snap => {
       if (snap.exists()) {
         SITE = mergeSite(DEFAULT_SITE, snap.data());
@@ -1121,6 +1281,7 @@
 
       applyTheme();
       render();
+      logSessionStartOnce();
 
       if (isAdminRoute()) renderAdmin();
     }, err => {
@@ -1194,6 +1355,7 @@
     }
 
     function setStep(step) {
+      const previousStep = current;
       current = step;
       localStorage.setItem("secret_current_step", String(current));
       selectedChoice = "";
@@ -1201,6 +1363,12 @@
       window.location.hash = current === 0 ? "start" : current > SITE.tests.length ? "gift" : `test-${current}`;
       render();
       window.scrollTo({ top: 0, behavior: "smooth" });
+
+      logEvent("navigation", {
+        fromStep: previousStep,
+        toStep: step,
+        toTitle: step > SITE.tests.length ? "النهاية" : (SITE.tests?.[step - 1]?.title || "البداية")
+      });
     }
 
     function updateProgress() {
@@ -1363,7 +1531,16 @@
       const msg = document.getElementById("messageBox");
       if (!input || !msg) return;
 
-      if (answerIsCorrect(input.value, test.answers)) {
+      const correct = answerIsCorrect(input.value, test.answers);
+      logEvent("answer_submit", {
+        testIndex: index,
+        testTitle: test.title,
+        testType: test.type,
+        answer: input.value,
+        correct
+      });
+
+      if (correct) {
         msg.className = "message good";
         msg.textContent = "صح! نروح للاختبار اللي بعده ❤️";
         miniConfetti();
@@ -1378,6 +1555,12 @@
       selectedChoice = choice;
       document.querySelectorAll(".choice").forEach(el => el.classList.remove("selected"));
       btn.classList.add("selected");
+
+      logEvent("choice_select", {
+        testIndex: current,
+        testTitle: SITE.tests?.[current - 1]?.title || "",
+        choice
+      });
     }
 
     function checkChoiceAnswer(index) {
@@ -1390,7 +1573,16 @@
         return;
       }
 
-      if (answerIsCorrect(selectedChoice, test.answers)) {
+      const correct = answerIsCorrect(selectedChoice, test.answers);
+      logEvent("answer_submit", {
+        testIndex: index,
+        testTitle: test.title,
+        testType: test.type,
+        answer: selectedChoice,
+        correct
+      });
+
+      if (correct) {
         msg.className = "message good";
         msg.textContent = "صح عليك! كملي ❤️";
         miniConfetti();
@@ -1405,6 +1597,12 @@
       selectedBox = value;
       document.querySelectorAll(".gift-box").forEach(el => el.classList.remove("selected"));
       btn.classList.add("selected");
+
+      logEvent("box_select", {
+        testIndex: current,
+        testTitle: SITE.tests?.[current - 1]?.title || "",
+        value
+      });
     }
 
     function checkBoxAnswer(index) {
@@ -1417,7 +1615,16 @@
         return;
       }
 
-      if (answerIsCorrect(selectedBox, test.answers)) {
+      const correct = answerIsCorrect(selectedBox, test.answers);
+      logEvent("answer_submit", {
+        testIndex: index,
+        testTitle: test.title,
+        testType: test.type,
+        answer: selectedBox,
+        correct
+      });
+
+      if (correct) {
         msg.className = "message good";
         msg.textContent = "صح! هذا الصندوق المطلوب ❤️";
         miniConfetti();
@@ -1431,6 +1638,12 @@
     function showHint() {
       const hint = document.getElementById("hintBox");
       if (hint) hint.classList.add("show");
+
+      logEvent("hint_open", {
+        testIndex: current,
+        testTitle: SITE.tests?.[current - 1]?.title || "",
+        hint: SITE.tests?.[current - 1]?.hint || ""
+      });
     }
 
     function renderFinal() {
@@ -1488,6 +1701,64 @@
           </div>
         </section>
       `;
+
+      attachMediaTracking();
+      logEvent("final_view", {
+        mediaCount: (SITE.media || []).length,
+        hasSong: Boolean(SITE.songUrl)
+      });
+    }
+
+    function attachMediaTracking() {
+      document.querySelectorAll("audio, video").forEach(media => {
+        if (media.dataset.trackingReady === "1") return;
+        media.dataset.trackingReady = "1";
+        media.dataset.lastLogMark = "-1";
+
+        const getTitle = () => {
+          const card = media.closest(".mini-card, .media-box");
+          const h = card?.querySelector("h3, .media-title");
+          return h?.textContent?.trim() || media.tagName.toLowerCase();
+        };
+
+        ["play", "pause", "ended", "seeking"].forEach(action => {
+          media.addEventListener(action, () => {
+            logEvent("media_" + action, {
+              title: getTitle(),
+              tag: media.tagName.toLowerCase(),
+              currentTime: Math.round(media.currentTime || 0),
+              duration: Math.round(media.duration || 0),
+              src: media.currentSrc || media.src || ""
+            });
+          });
+        });
+
+        media.addEventListener("timeupdate", () => {
+          const mark = Math.floor((media.currentTime || 0) / 15);
+          if (mark > Number(media.dataset.lastLogMark || -1)) {
+            media.dataset.lastLogMark = String(mark);
+            logEvent("media_progress", {
+              title: getTitle(),
+              tag: media.tagName.toLowerCase(),
+              currentTime: Math.round(media.currentTime || 0),
+              duration: Math.round(media.duration || 0),
+              src: media.currentSrc || media.src || ""
+            });
+          }
+        });
+      });
+
+      document.querySelectorAll(".media-box iframe").forEach(frame => {
+        const box = frame.closest(".media-box");
+        if (!box || box.dataset.youtubeTrackingReady === "1") return;
+        box.dataset.youtubeTrackingReady = "1";
+        box.addEventListener("click", () => {
+          logEvent("youtube_click", {
+            title: box.querySelector(".media-title")?.textContent?.trim() || "YouTube",
+            src: frame.src || ""
+          });
+        }, true);
+      });
     }
 
     function renderMediaItem(item) {
@@ -1601,6 +1872,7 @@
 
       if (secretSkipClicks >= 5) {
         secretSkipClicks = 0;
+        logEvent("secret_skip_success", { targetStep: SITE.tests.length + 1 });
         setStep(SITE.tests.length + 1);
       }
     }
@@ -1609,6 +1881,7 @@
       const ok = confirm("تبغى ترجع الرحلة من البداية؟");
       if (!ok) return;
 
+      logEvent("journey_reset", { fromStep: current });
       localStorage.removeItem("secret_current_step");
       current = 0;
       selectedChoice = "";
@@ -1688,6 +1961,7 @@
               ${tabButton("final", "النهاية والرسالة")}
               ${tabButton("media", "الرفع والملفات")}
               ${tabButton("tests", "الاختبارات")}
+              ${tabButton("logs", "السجل والتفاصيل")}
               ${tabButton("backup", "نسخة احتياطية")}
             </div>
 
@@ -1709,6 +1983,7 @@
       if (adminTab === "final") renderAdminFinal();
       if (adminTab === "media") renderAdminMedia();
       if (adminTab === "tests") renderAdminTests();
+      if (adminTab === "logs") renderAdminLogs();
       if (adminTab === "backup") renderAdminBackup();
     }
 
@@ -1720,6 +1995,10 @@
     }
 
     function setAdminTab(tab) {
+      if (logsUnsubscribe && tab !== "logs") {
+        logsUnsubscribe();
+        logsUnsubscribe = null;
+      }
       adminTab = tab;
       renderAdmin();
     }
@@ -1744,6 +2023,10 @@
 
     function closeAdmin() {
       adminOpen = false;
+      if (logsUnsubscribe) {
+        logsUnsubscribe();
+        logsUnsubscribe = null;
+      }
       adminPanel.classList.add("hidden");
 
       if (location.search.includes("admin")) {
@@ -2286,6 +2569,102 @@
       saveConfig(SITE).then(renderAdminTests);
     }
 
+
+    function renderAdminLogs() {
+      document.getElementById("adminContent").innerHTML = `
+        <div class="admin-card">
+          <h3 style="margin-top:0;color:var(--gold)">سجل كل شيء يصير بالموقع</h3>
+          <p class="small">
+            هنا يظهر دخول الزائر، التنقل، ضغط الأزرار، اختيار الإجابات، الإجابات الصحيحة والخاطئة، فتح التلميح، تشغيل/إيقاف المقاطع، وتقدم الفيديو/الأغنية.
+          </p>
+
+          <div class="log-toolbar">
+            <input id="logSearch" placeholder="بحث في السجل: اسم اختبار، جواب، تشغيل، خطأ..." oninput="renderLogsList()">
+            <button class="secondary" onclick="copyLogs()">نسخ السجل</button>
+            <button class="danger" onclick="clearAllLogs()">حذف السجل</button>
+          </div>
+
+          <div id="logsList" class="log-list">
+            <div class="empty-media">جاري تحميل السجل...</div>
+          </div>
+        </div>
+      `;
+
+      subscribeLogs();
+      renderLogsList();
+    }
+
+    function subscribeLogs() {
+      if (logsUnsubscribe) return;
+
+      const q = query(eventsCol, orderBy("createdAtMs", "desc"), limit(250));
+      logsUnsubscribe = onSnapshot(q, snap => {
+        latestLogs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        renderLogsList();
+      }, err => {
+        console.error(err);
+        setAdminStatus("فشل تحميل السجل: " + err.message, false);
+      });
+    }
+
+    function renderLogsList() {
+      const box = document.getElementById("logsList");
+      if (!box) return;
+
+      const search = (document.getElementById("logSearch")?.value || "").trim().toLowerCase();
+      let logs = latestLogs || [];
+
+      if (search) {
+        logs = logs.filter(item => JSON.stringify(item).toLowerCase().includes(search));
+      }
+
+      if (!logs.length) {
+        box.innerHTML = `<div class="empty-media">لا يوجد سجل مطابق.</div>`;
+        return;
+      }
+
+      box.innerHTML = logs.map(item => {
+        const time = item.createdAtMs ? new Date(item.createdAtMs).toLocaleString("ar-SA") : "وقت غير معروف";
+        const details = JSON.stringify(item.details || {}, null, 2);
+        return `
+          <div class="log-item">
+            <div class="log-top">
+              <span class="log-type">${esc(item.type || "event")}</span>
+              <span class="log-time">${esc(time)} — جلسة: ${esc(item.sessionId || "")}</span>
+            </div>
+            <div class="small">
+              المرحلة: ${esc(item.currentStep ?? "")} — ${esc(item.stepTitle || "")}<br>
+              الصفحة: ${esc(item.pageHash || "")}
+            </div>
+            <div class="log-json">${esc(details)}</div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    async function copyLogs() {
+      const text = JSON.stringify(latestLogs || [], null, 2);
+      await navigator.clipboard.writeText(text);
+      setAdminStatus("تم نسخ السجل.");
+    }
+
+    async function clearAllLogs() {
+      if (!confirm("متأكد تحذف السجل؟")) return;
+
+      try {
+        let deleted = 0;
+        const snap = await getDocs(query(eventsCol, limit(500)));
+        for (const d of snap.docs) {
+          await deleteDoc(d.ref);
+          deleted++;
+        }
+        setAdminStatus(`تم حذف ${deleted} حدث من السجل. كرر الحذف إذا كان السجل أكبر من 500.`);
+      } catch (err) {
+        console.error(err);
+        setAdminStatus("فشل حذف السجل: " + err.message, false);
+      }
+    }
+
     function renderAdminBackup() {
       document.getElementById("adminContent").innerHTML = `
         <div class="admin-card">
@@ -2367,6 +2746,9 @@
     window.saveTestEditor = saveTestEditor;
     window.deleteTest = deleteTest;
     window.moveTest = moveTest;
+    window.renderLogsList = renderLogsList;
+    window.copyLogs = copyLogs;
+    window.clearAllLogs = clearAllLogs;
     window.copyBackup = copyBackup;
     window.restoreBackup = restoreBackup;
     window.resetCloudDefault = resetCloudDefault;
