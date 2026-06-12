@@ -921,6 +921,8 @@
 
   <section id="adminPanel" class="admin-panel hidden"></section>
 
+  <script src="https://upload-widget.cloudinary.com/latest/global/all.js" type="text/javascript"></script>
+
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
     import { getAnalytics, isSupported } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-analytics.js";
@@ -2293,14 +2295,15 @@
         <div class="admin-card">
           <h3 style="margin-top:0;color:var(--gold)">رفع ملفات</h3>
           <p class="small">
-            هذه النسخة ترفع عبر Cloudinary. اكتب CLOUDINARY_CLOUD_NAME و CLOUDINARY_UPLOAD_PRESET داخل الكود.
-            لو ما عندك، استخدم خانة "إضافة رابط مباشر" تحت.
+هذه النسخة ترفع عبر نافذة Cloudinary Upload Widget، وهي أفضل للمقاطع الطويلة لأنها تدعم الرفع المجزأ.
+            لو فشل المقطع بسبب حد الحساب، ارفعه يدويًا في Cloudinary Media Library ثم أضف الرابط من خانة "إضافة رابط مباشر".
           </p>
 
           <div class="form-grid">
             <div class="field">
-              <label>اختر ملف</label>
-              <input id="uploadFile" type="file" accept="image/*,video/*,audio/*">
+              <label>الرفع للمقاطع الطويلة</label>
+              <input id="uploadFile" type="file" accept="image/*,video/*,audio/*" style="display:none">
+              <div class="small">اضغط زر "رفع الملف" وبتفتح نافذة Cloudinary، وهي أفضل للمقاطع الطويلة.</div>
             </div>
             <div class="field">
               <label>عنوان الملف</label>
@@ -2358,98 +2361,122 @@
     }
 
     async function uploadSelectedFile() {
-      const file = document.getElementById("uploadFile")?.files?.[0];
       const title = val("uploadTitle");
       const target = val("uploadTarget");
       const bar = document.getElementById("uploadBar");
       const status = document.getElementById("uploadStatus");
 
-      if (!file) {
-        status.textContent = "اختر ملف أول.";
-        return;
-      }
-
       if (!CLOUDINARY_CLOUD_NAME || !CLOUDINARY_UPLOAD_PRESET) {
-        status.textContent = "الرفع يحتاج Cloudinary. حط CLOUDINARY_CLOUD_NAME و CLOUDINARY_UPLOAD_PRESET داخل الكود، أو استخدم إضافة رابط مباشر.";
+        status.textContent = "بيانات Cloudinary ناقصة داخل الكود.";
         return;
       }
 
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
-      formData.append("folder", "love-site");
+      if (!window.cloudinary || !window.cloudinary.createUploadWidget) {
+        status.textContent = "نافذة Cloudinary ما تحمّلت. حدث الصفحة وجرب.";
+        return;
+      }
 
-      status.textContent = "بدأ الرفع...";
       bar.style.width = "0%";
+      status.textContent = "افتح نافذة الرفع واختر الملف. للمقاطع الطويلة انتظر لين يخلص 100%.";
 
-      const uploadUrl = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/auto/upload`;
-      const xhr = new XMLHttpRequest();
-      xhr.open("POST", uploadUrl);
-
-      xhr.upload.onprogress = function (event) {
-        if (event.lengthComputable) {
-          const percent = Math.round((event.loaded / event.total) * 100);
-          bar.style.width = percent + "%";
-          status.textContent = `جاري الرفع: ${percent}%`;
+      const widget = window.cloudinary.createUploadWidget({
+        cloudName: CLOUDINARY_CLOUD_NAME,
+        uploadPreset: CLOUDINARY_UPLOAD_PRESET,
+        sources: ["local", "camera", "url", "google_drive"],
+        multiple: false,
+        resourceType: "auto",
+        folder: "love-site",
+        maxChunkSize: 6000000,
+        clientAllowedFormats: ["png", "jpg", "jpeg", "webp", "gif", "mp4", "mov", "webm", "m4v", "mp3", "m4a", "wav", "aac", "ogg"],
+        showAdvancedOptions: false,
+        showPoweredBy: false,
+        styles: {
+          palette: {
+            window: "#170000",
+            sourceBg: "#250000",
+            windowBorder: "#ff6b6b",
+            tabIcon: "#ffd27d",
+            inactiveTabIcon: "#ffffff",
+            menuIcons: "#ffd27d",
+            link: "#ffd27d",
+            action: "#ff2525",
+            inProgress: "#ffd27d",
+            complete: "#8dffbc",
+            error: "#ffc0c0",
+            textDark: "#ffffff",
+            textLight: "#ffffff"
+          }
         }
-      };
-
-      xhr.onload = async function () {
-        if (xhr.status < 200 || xhr.status >= 300) {
-          status.textContent = "فشل الرفع: " + xhr.responseText;
+      }, async (error, result) => {
+        if (error) {
+          console.error(error);
+          status.textContent = "فشل الرفع: " + (error.message || JSON.stringify(error));
+          bar.style.width = "0%";
           return;
         }
 
-        const data = JSON.parse(xhr.responseText);
-        const url = data.secure_url;
+        if (!result) return;
 
-        if (!url) {
-          status.textContent = "تم الرفع لكن ما رجع رابط.";
-          return;
+        if (result.event === "queues-start") {
+          status.textContent = "بدأ الرفع، لا تقفل الصفحة...";
+          bar.style.width = "15%";
         }
 
-        if (target === "logo") {
-          SITE.logoUrl = url;
-        } else if (target === "shareImage") {
-          if (!file.type.startsWith("image/")) {
-            status.textContent = "صورة المشاركة لازم تكون ملف صورة.";
+        if (result.event === "upload-added") {
+          status.textContent = "تم اختيار الملف وجاري الرفع...";
+          bar.style.width = "25%";
+        }
+
+        if (result.event === "success") {
+          const info = result.info || {};
+          const url = info.secure_url || info.url || "";
+
+          if (!url) {
+            status.textContent = "تم الرفع لكن الرابط ما رجع.";
             return;
           }
-          SITE.shareImageUrl = url;
-        } else if (target === "song") {
-          SITE.songUrl = url;
-        } else {
-          let type = "video";
-          if (file.type.startsWith("image/")) type = "image";
-          if (file.type.startsWith("video/")) type = "video";
-          if (file.type.startsWith("audio/")) {
+
+          const resourceType = info.resource_type || "";
+          const format = String(info.format || "").toLowerCase();
+          const isImage = resourceType === "image";
+          const isAudio = ["mp3", "m4a", "wav", "aac", "ogg"].includes(format);
+
+          if (target === "logo") {
+            if (!isImage) {
+              status.textContent = "الشعار لازم يكون صورة. الملف انرفع، لكن ما جعلته شعار.";
+              return;
+            }
+            SITE.logoUrl = url;
+          } else if (target === "shareImage") {
+            if (!isImage) {
+              status.textContent = "صورة المشاركة لازم تكون صورة. الملف انرفع، لكن ما جعلته صورة مشاركة.";
+              return;
+            }
+            SITE.shareImageUrl = url;
+          } else if (target === "song") {
             SITE.songUrl = url;
-            await saveConfig(SITE);
-            status.textContent = "تم رفع الصوت وجعله الأغنية.";
-            bar.style.width = "100%";
-            renderAdminMedia();
-            return;
+          } else {
+            SITE.media = SITE.media || [];
+            SITE.media.push({
+              title: title || info.original_filename || "ملف مرفوع",
+              type: isImage ? "image" : "video",
+              url
+            });
           }
 
-          SITE.media = SITE.media || [];
-          SITE.media.push({
-            title: title || file.name,
-            type,
-            url
-          });
+          await saveConfig(SITE);
+          status.textContent = "تم الرفع والحفظ بنجاح، وظهر عند الكل.";
+          bar.style.width = "100%";
+          renderAdminMedia();
         }
 
-        await saveConfig(SITE);
-        status.textContent = "تم الرفع والحفظ بنجاح.";
-        bar.style.width = "100%";
-        renderAdminMedia();
-      };
+        if (result.event === "abort") {
+          status.textContent = "تم إلغاء الرفع.";
+          bar.style.width = "0%";
+        }
+      });
 
-      xhr.onerror = function () {
-        status.textContent = "فشل الاتصال أثناء الرفع.";
-      };
-
-      xhr.send(formData);
+      widget.open();
     }
 
     function addManualMedia() {
