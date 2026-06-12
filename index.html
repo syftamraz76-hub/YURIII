@@ -5,6 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>رحلة المفاجأة</title>
 
+  <meta name="description" content="رحلة مفاجأة سرية" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="رحلة المفاجأة" id="ogTitle" />
+  <meta property="og:description" content="رحلة مفاجأة سرية" id="ogDescription" />
+  <meta property="og:image" content="" id="ogImage" />
+  <meta property="og:url" content="" id="ogUrl" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="رحلة المفاجأة" id="twitterTitle" />
+  <meta name="twitter:description" content="رحلة مفاجأة سرية" id="twitterDescription" />
+  <meta name="twitter:image" content="" id="twitterImage" />
+
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap');
 
@@ -941,6 +952,9 @@
     const CLOUDINARY_CLOUD_NAME = "dsyy8fejc";
     const CLOUDINARY_UPLOAD_PRESET = "yuriiiiiiiiiii";
 
+    // رابط Cloudflare Worker للذكاء الاصطناعي تقدر تحطه من لوحة الإدارة بدون تعديل الكود
+    const DEFAULT_AI_WORKER_URL = "";
+
     const firebaseConfig = {
       apiKey: "AIzaSyDsj7ozg8unLTulCysLToP7fTWF4O_wkFQ",
       authDomain: "gggggggggggggg-59d90.firebaseapp.com",
@@ -966,6 +980,9 @@
       senderName: "سيف",
       logoUrl: "",
       songUrl: "",
+      shareImageUrl: "",
+      shareTitle: "رحلة المفاجأة",
+      shareDescription: "رسالة ومفاجأة خاصة تنتظر الحل.",
       theme: {
         bg1: "#100000",
         bg2: "#330404",
@@ -1016,6 +1033,7 @@
         "العهدة تتسلّم، والسديري يرجع، بس مكانك لا يتغير.",
         "أنتِ الهدية قبل الهدية."
       ],
+      customSections: [],
       media: [],
       tests: [
         {
@@ -1177,6 +1195,7 @@
     let editingTestIndex = 0;
     let logsUnsubscribe = null;
     let latestLogs = [];
+    let aiPreviewSite = null;
     const SESSION_ID = getOrCreateSessionId();
     let sessionStartedLogged = sessionStorage.getItem("love_session_started") === "1";
 
@@ -1313,6 +1332,7 @@
         final: { ...base.final, ...(data.final || {}) },
         memories: Array.isArray(data.memories) ? data.memories : base.memories,
         media: Array.isArray(data.media) ? data.media : base.media,
+        customSections: Array.isArray(data.customSections) ? data.customSections : (base.customSections || []),
         tests: Array.isArray(data.tests) ? data.tests : base.tests
       };
     }
@@ -1326,6 +1346,30 @@
       document.documentElement.style.setProperty("--main", t.main || DEFAULT_SITE.theme.main);
       document.documentElement.style.setProperty("--main2", t.main2 || DEFAULT_SITE.theme.main2);
       document.documentElement.style.setProperty("--gold", t.gold || DEFAULT_SITE.theme.gold);
+    }
+
+    function setMetaContent(id, value) {
+      const el = document.getElementById(id);
+      if (el) el.setAttribute("content", value || "");
+    }
+
+    function applyShareMeta() {
+      const shareTitle = SITE.shareTitle || SITE.title || "رحلة المفاجأة";
+      const shareDesc = SITE.shareDescription || SITE.intro?.desc || "رسالة ومفاجأة خاصة.";
+      const shareImage = SITE.shareImageUrl || SITE.logoUrl || "";
+      const pageUrl = location.href.split("#")[0];
+
+      document.title = shareTitle;
+      const descMeta = document.querySelector('meta[name="description"]');
+      if (descMeta) descMeta.setAttribute("content", shareDesc);
+
+      setMetaContent("ogTitle", shareTitle);
+      setMetaContent("ogDescription", shareDesc);
+      setMetaContent("ogImage", shareImage);
+      setMetaContent("ogUrl", pageUrl);
+      setMetaContent("twitterTitle", shareTitle);
+      setMetaContent("twitterDescription", shareDesc);
+      setMetaContent("twitterImage", shareImage);
     }
 
     function esc(value) {
@@ -1386,6 +1430,7 @@
 
     function render() {
       applyTheme();
+      applyShareMeta();
       updateProgress();
 
       brandText.textContent = SITE.title || "رحلة المفاجأة";
@@ -1653,6 +1698,15 @@
         ? SITE.media.map(item => renderMediaItem(item)).join("")
         : `<div class="empty-media">ما فيه صور أو فيديوهات مضافة من لوحة الإدارة.</div>`;
 
+      const customSectionsHTML = (SITE.customSections || []).length
+        ? (SITE.customSections || []).map(section => `
+          <div class="mini-card full">
+            <h3>${esc(section.title || "قسم جديد")}</h3>
+            <div class="letter">${esc(section.content || "")}</div>
+          </div>
+        `).join("")
+        : "";
+
       app.innerHTML = `
         <section class="page">
           <div class="card">
@@ -1686,6 +1740,8 @@
                     ${(SITE.memories || []).map(item => `<div class="memory">${esc(item)}</div>`).join("")}
                   </div>
                 </div>
+
+                ${customSectionsHTML}
 
                 <div class="mini-card full">
                   <h3>🎬 الصور والفيديوهات</h3>
@@ -1961,6 +2017,7 @@
               ${tabButton("final", "النهاية والرسالة")}
               ${tabButton("media", "الرفع والملفات")}
               ${tabButton("tests", "الاختبارات")}
+              ${tabButton("ai", "الذكاء الاصطناعي")}
               ${tabButton("logs", "السجل والتفاصيل")}
               ${tabButton("backup", "نسخة احتياطية")}
             </div>
@@ -1983,6 +2040,7 @@
       if (adminTab === "final") renderAdminFinal();
       if (adminTab === "media") renderAdminMedia();
       if (adminTab === "tests") renderAdminTests();
+      if (adminTab === "ai") renderAdminAI();
       if (adminTab === "logs") renderAdminLogs();
       if (adminTab === "backup") renderAdminBackup();
     }
@@ -2064,6 +2122,18 @@
               <input id="logoUrl" value="${esc(SITE.logoUrl)}" placeholder="ارفع شعار من صفحة الرفع أو حط رابط">
             </div>
             <div class="field">
+              <label>صورة المشاركة</label>
+              <input id="shareImageUrl" value="${esc(SITE.shareImageUrl || "")}" placeholder="ارفع صورة من الرفع أو حط رابط صورة">
+            </div>
+            <div class="field">
+              <label>عنوان المشاركة</label>
+              <input id="shareTitle" value="${esc(SITE.shareTitle || SITE.title || "")}" placeholder="العنوان اللي يظهر عند إرسال الرابط">
+            </div>
+            <div class="field">
+              <label>وصف المشاركة</label>
+              <input id="shareDescription" value="${esc(SITE.shareDescription || "")}" placeholder="الوصف اللي يظهر عند إرسال الرابط">
+            </div>
+            <div class="field">
               <label>اسمها</label>
               <input id="loverName" value="${esc(SITE.loverName)}">
             </div>
@@ -2128,6 +2198,9 @@
     function saveGeneral() {
       SITE.title = val("siteTitle");
       SITE.logoUrl = val("logoUrl");
+      SITE.shareImageUrl = val("shareImageUrl");
+      SITE.shareTitle = val("shareTitle") || SITE.title;
+      SITE.shareDescription = val("shareDescription");
       SITE.loverName = val("loverName");
       SITE.senderName = val("senderName");
       SITE.theme.bg1 = val("bg1");
@@ -2173,6 +2246,10 @@
               <textarea id="memoriesText">${esc((SITE.memories || []).join("\n"))}</textarea>
             </div>
             <div class="field">
+              <label>الأقسام الإضافية، صيغة كل قسم: العنوان | المحتوى</label>
+              <textarea id="customSectionsText">${esc((SITE.customSections || []).map(s => `${s.title || ""} | ${s.content || ""}`).join("\n"))}</textarea>
+            </div>
+            <div class="field">
               <label>رابط الأغنية</label>
               <input id="songUrlInput" value="${esc(SITE.songUrl)}" placeholder="ارفع أغنية من صفحة الرفع أو حط رابط">
             </div>
@@ -2193,6 +2270,7 @@
       SITE.final.letter = val("finalLetter");
       SITE.songUrl = val("songUrlInput");
       SITE.memories = lines("memoriesText");
+      SITE.customSections = parseCustomSections(val("customSectionsText"));
       saveConfig(SITE);
     }
 
@@ -2233,6 +2311,7 @@
               <select id="uploadTarget">
                 <option value="media">إضافة للصور والفيديوهات</option>
                 <option value="logo">جعله شعار الموقع</option>
+                <option value="shareImage">جعله صورة المشاركة</option>
                 <option value="song">جعله الأغنية</option>
               </select>
             </div>
@@ -2331,6 +2410,12 @@
 
         if (target === "logo") {
           SITE.logoUrl = url;
+        } else if (target === "shareImage") {
+          if (!file.type.startsWith("image/")) {
+            status.textContent = "صورة المشاركة لازم تكون ملف صورة.";
+            return;
+          }
+          SITE.shareImageUrl = url;
         } else if (target === "song") {
           SITE.songUrl = url;
         } else {
@@ -2552,6 +2637,20 @@
         });
     }
 
+    function parseCustomSections(text) {
+      return String(text || "")
+        .split("\n")
+        .map(x => x.trim())
+        .filter(Boolean)
+        .map(line => {
+          const [title, ...rest] = line.split("|");
+          return {
+            title: (title || "قسم جديد").trim(),
+            content: (rest.join("|") || "").trim()
+          };
+        });
+    }
+
     function deleteTest(i) {
       if (!confirm("حذف هذا الاختبار؟")) return;
       SITE.tests.splice(i, 1);
@@ -2569,6 +2668,152 @@
       saveConfig(SITE).then(renderAdminTests);
     }
 
+
+
+    function renderAdminAI() {
+      const savedUrl = localStorage.getItem("ai_worker_url") || DEFAULT_AI_WORKER_URL || "";
+      const savedToken = localStorage.getItem("ai_admin_token") || "";
+
+      document.getElementById("adminContent").innerHTML = `
+        <div class="admin-card">
+          <h3 style="margin-top:0;color:var(--gold)">ذكاء اصطناعي يعدل الموقع كامل</h3>
+          <p class="small">
+            اكتب طلبك، والذكاء يرجع نسخة معدلة من بيانات الموقع. تقدر تطبقها مباشرة أو تشوف المعاينة أول.
+            يقدر يعدل النصوص، الألوان، الاختبارات، الإجابات، التلميحات، الأقسام، الذكريات، وروابط الصور/الفيديوهات/الأغاني.
+          </p>
+
+          <div class="form-grid">
+            <div class="field">
+              <label>رابط Cloudflare Worker</label>
+              <input id="aiWorkerUrl" value="${esc(savedUrl)}" placeholder="https://your-worker.your-subdomain.workers.dev">
+            </div>
+            <div class="field">
+              <label>رمز الإدارة للذكاء الاصطناعي</label>
+              <input id="aiAdminToken" type="password" value="${esc(savedToken)}" placeholder="AI_ADMIN_TOKEN">
+            </div>
+          </div>
+
+          <div class="form-grid one" style="margin-top:14px">
+            <div class="field">
+              <label>وش تبي الذكاء يسوي؟</label>
+              <textarea id="aiPrompt" style="min-height:190px" placeholder="مثال: سو الموقع أفخم، أضف 5 اختبارات رومانسية، غير النهاية، أضف قسم جديد باسم وعد، وخلي الألوان أسود وأحمر وذهبي."></textarea>
+            </div>
+          </div>
+
+          <div class="buttons">
+            <button onclick="askAIToEdit(false)">توليد تعديل ومعاينة</button>
+            <button class="secondary" onclick="askAIToEdit(true)">توليد وتطبيق مباشرة</button>
+            <button class="secondary" onclick="applyAIPreview()">تطبيق آخر معاينة</button>
+          </div>
+
+          <div class="admin-status" id="aiStatus"></div>
+        </div>
+
+        <div class="admin-card">
+          <h3 style="margin-top:0;color:var(--gold)">معاينة التعديل من الذكاء</h3>
+          <textarea id="aiPreview" dir="ltr" style="min-height:420px" placeholder="هنا تظهر نسخة JSON المعدلة..."></textarea>
+        </div>
+      `;
+    }
+
+    function setAIStatus(text, good = true) {
+      const box = document.getElementById("aiStatus");
+      if (!box) return;
+      box.style.color = good ? "var(--gold)" : "var(--bad)";
+      box.textContent = text;
+    }
+
+    async function askAIToEdit(applyNow = false) {
+      const workerUrl = val("aiWorkerUrl").trim();
+      const token = val("aiAdminToken").trim();
+      const instruction = val("aiPrompt").trim();
+
+      if (!workerUrl) {
+        setAIStatus("حط رابط Cloudflare Worker أول.", false);
+        return;
+      }
+
+      if (!token) {
+        setAIStatus("حط رمز الإدارة للذكاء الاصطناعي.", false);
+        return;
+      }
+
+      if (!instruction) {
+        setAIStatus("اكتب طلبك للذكاء أول.", false);
+        return;
+      }
+
+      localStorage.setItem("ai_worker_url", workerUrl);
+      localStorage.setItem("ai_admin_token", token);
+
+      setAIStatus("جاري إرسال الطلب للذكاء الاصطناعي...");
+
+      try {
+        const response = await fetch(workerUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            instruction,
+            currentSite: SITE
+          })
+        });
+
+        const text = await response.text();
+
+        if (!response.ok) {
+          throw new Error(text || `HTTP ${response.status}`);
+        }
+
+        const data = JSON.parse(text);
+        aiPreviewSite = sanitizeAISite(data.site || data);
+
+        document.getElementById("aiPreview").value = JSON.stringify(aiPreviewSite, null, 2);
+
+        if (applyNow) {
+          await applyAIPreview();
+        } else {
+          setAIStatus(data.message || "تم توليد التعديل. راجع المعاينة ثم اضغط تطبيق.");
+        }
+      } catch (err) {
+        console.error(err);
+        setAIStatus("فشل طلب الذكاء: " + err.message, false);
+      }
+    }
+
+    function sanitizeAISite(site) {
+      const merged = mergeSite(DEFAULT_SITE, site || {});
+      merged.tests = Array.isArray(merged.tests) ? merged.tests : [];
+      merged.media = Array.isArray(merged.media) ? merged.media : [];
+      merged.memories = Array.isArray(merged.memories) ? merged.memories : [];
+      merged.customSections = Array.isArray(merged.customSections) ? merged.customSections : [];
+      return merged;
+    }
+
+    async function applyAIPreview() {
+      try {
+        const previewBox = document.getElementById("aiPreview");
+        const raw = previewBox?.value?.trim();
+
+        if (raw) {
+          aiPreviewSite = sanitizeAISite(JSON.parse(raw));
+        }
+
+        if (!aiPreviewSite) {
+          setAIStatus("ما فيه معاينة لتطبيقها.", false);
+          return;
+        }
+
+        SITE = aiPreviewSite;
+        await saveConfig(SITE);
+        setAIStatus("تم تطبيق تعديل الذكاء وحفظه سحابيًا. ظهر عند الكل.");
+      } catch (err) {
+        console.error(err);
+        setAIStatus("فشل تطبيق المعاينة: " + err.message, false);
+      }
+    }
 
     function renderAdminLogs() {
       document.getElementById("adminContent").innerHTML = `
@@ -2734,6 +2979,8 @@
     window.adminLogin = adminLogin;
     window.logoutAdmin = logoutAdmin;
     window.setAdminTab = setAdminTab;
+    window.askAIToEdit = askAIToEdit;
+    window.applyAIPreview = applyAIPreview;
     window.saveAll = saveAll;
     window.saveGeneral = saveGeneral;
     window.saveFinal = saveFinal;
